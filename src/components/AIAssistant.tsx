@@ -61,23 +61,29 @@ export default function AIAssistant({ topic, context, isOpen, onToggle }: AIAssi
     }
 
     setMessages(prev => [...prev, userMessage])
+    const userInput = input.trim()
     setInput('')
     setIsLoading(true)
 
     try {
+      console.log('[AIAssistant] Sending message:', userInput.substring(0, 50))
+      
       const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input.trim(),
+          message: userInput,
           topic,
           context
         })
       })
 
+      console.log('[AIAssistant] Response status:', response.status)
+      
       const data = await response.json()
+      console.log('[AIAssistant] Response data:', { success: data.success, hasResponse: !!data.response })
 
-      if (data.success) {
+      if (response.ok && data.success && data.response) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -86,13 +92,15 @@ export default function AIAssistant({ topic, context, isOpen, onToggle }: AIAssi
         }
         setMessages(prev => [...prev, assistantMessage])
       } else {
-        throw new Error(data.error || 'Error al obtener respuesta')
+        console.error('[AIAssistant] Error in response:', data)
+        throw new Error(data.details || data.error || 'Error al obtener respuesta')
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[AIAssistant] Exception:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Lo siento, hubo un error al procesar tu pregunta. Por favor intenta de nuevo. 🙏',
+        content: `Lo siento, hubo un error al procesar tu pregunta. ${error?.message || 'Por favor intenta de nuevo.'} 🙏`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage])

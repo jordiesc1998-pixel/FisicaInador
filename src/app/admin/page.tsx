@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { 
   ArrowLeft, Image as ImageIcon, Video, Gamepad2, Save, Plus, Trash2, 
-  Edit, Upload, ExternalLink, Check, X, Settings, Code, Eye, Copy
+  Edit, Upload, ExternalLink, Check, X, Settings, Code, Eye, Copy, Lock, LogOut
 } from 'lucide-react'
 import { planets } from '@/data/planets'
 
@@ -42,6 +42,12 @@ const initialGames: GameConfig[] = [
 ]
 
 export default function AdminPage() {
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  
   const [activeTab, setActiveTab] = useState<'imagenes' | 'videos' | 'juegos'>('imagenes')
   const [selectedPlanet, setSelectedPlanet] = useState<string>(planets[0].id)
   const [videos, setVideos] = useState<VideoLink[]>(initialVideos)
@@ -57,6 +63,37 @@ export default function AdminPage() {
   const [gameCode, setGameCode] = useState('')
   const [gameTitle, setGameTitle] = useState('')
   const [showPreview, setShowPreview] = useState(false)
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoggingIn(true)
+    setAuthError('')
+
+    try {
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setIsAuthenticated(true)
+        setPassword('')
+      } else {
+        setAuthError(data.error || 'Contraseña incorrecta')
+      }
+    } catch (error) {
+      setAuthError('Error de conexión')
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+  }
 
   const activePlanets = planets.filter(p => p.isActive)
 
@@ -148,6 +185,114 @@ export default function AdminPage() {
     navigator.clipboard.writeText(text)
   }
 
+  // Pantalla de Login
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        {/* Stars background */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          {[...Array(100)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full bg-white"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: Math.random() * 2 + 1,
+                height: Math.random() * 2 + 1,
+                opacity: Math.random() * 0.7 + 0.3,
+              }}
+            />
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <div className="bg-gray-800/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+            {/* Logo */}
+            <div className="text-center mb-8">
+              <motion.div
+                className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center"
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                <Lock className="w-10 h-10 text-white" />
+              </motion.div>
+              <h1 className="text-2xl font-bold text-white mb-2">Acceso Restringido</h1>
+              <p className="text-white/60 text-sm">Panel de Administración de FisicaInador</p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  Contraseña de Administrador
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Ingresa la contraseña..."
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  disabled={isLoggingIn}
+                />
+              </div>
+
+              {authError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-400 text-sm text-center"
+                >
+                  {authError}
+                </motion.p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoggingIn || !password}
+                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoggingIn ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <Settings className="w-5 h-5" />
+                    </motion.div>
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-5 h-5" />
+                    Acceder
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Back link */}
+            <div className="mt-6 text-center">
+              <Link href="/" className="text-white/40 hover:text-white text-sm flex items-center justify-center gap-2 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Volver al Universo
+              </Link>
+            </div>
+          </div>
+
+          {/* Hint for demo */}
+          <p className="text-center text-white/30 text-xs mt-4">
+            Demo: La contraseña es "FisicaInador2024!"
+          </p>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
       {/* Header */}
@@ -165,33 +310,43 @@ export default function AdminPage() {
             </h1>
           </div>
           
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                >
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Save className="w-4 h-4" />
+                  </motion.div>
+                  Guardando...
+                </>
+              ) : saved ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  ¡Guardado!
+                </>
+              ) : (
+                <>
                   <Save className="w-4 h-4" />
-                </motion.div>
-                Guardando...
-              </>
-            ) : saved ? (
-              <>
-                <Check className="w-4 h-4" />
-                ¡Guardado!
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Guardar Cambios
-              </>
-            )}
-          </button>
+                  Guardar Cambios
+                </>
+              )}
+            </button>
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </button>
+          </div>
         </div>
       </header>
 
