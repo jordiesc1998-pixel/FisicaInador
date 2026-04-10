@@ -16,8 +16,6 @@ export interface Planet {
   icon: string;
   description: string;
   isActive: boolean;
-  orbitRadius: number;
-  orbitSpeed: number;
   size: number;
   theory: PlanetTheory;
 }
@@ -33,8 +31,6 @@ export const planets: Planet[] = [
     icon: '🔧',
     description: 'La deformación de un resorte es proporcional a la fuerza aplicada',
     isActive: true,
-    orbitRadius: 120,
-    orbitSpeed: 20,
     size: 45,
     theory: {
       definition: 'La Ley de Hooke establece que la deformación de un resorte es directamente proporcional a la fuerza aplicada, siempre que no se exceda el límite de elasticidad del material.',
@@ -64,8 +60,6 @@ export const planets: Planet[] = [
     icon: '⚡',
     description: 'Fuerzas entre cargas eléctricas positivas y negativas',
     isActive: true,
-    orbitRadius: 160,
-    orbitSpeed: 25,
     size: 50,
     theory: {
       definition: 'Las cargas eléctricas son una propiedad fundamental de la materia que determina sus interacciones electromagnéticas. Existen dos tipos: positivas (+) y negativas (-). Cargas iguales se repelen, cargas opuestas se atraen.',
@@ -96,8 +90,6 @@ export const planets: Planet[] = [
     icon: '🔌',
     description: 'Análisis de circuitos eléctricos y Ley de Ohm',
     isActive: true,
-    orbitRadius: 200,
-    orbitSpeed: 18,
     size: 48,
     theory: {
       definition: 'Un circuito eléctrico es un camino cerrado que permite la circulación de corriente eléctrica. Incluye elementos como fuentes de voltaje, resistencias, condensadores e inductores.',
@@ -128,8 +120,6 @@ export const planets: Planet[] = [
     icon: '🔋',
     description: 'Trabajo por unidad de carga que proporciona una fuente',
     isActive: true,
-    orbitRadius: 240,
-    orbitSpeed: 22,
     size: 42,
     theory: {
       definition: 'La Fuerza Electromotriz (FEM) es el trabajo realizado por unidad de carga para mantener una diferencia de potencial en un circuito. Representa la energía que una fuente proporciona a los electrones.',
@@ -160,8 +150,6 @@ export const planets: Planet[] = [
     icon: '🌊',
     description: 'Propagación de energía mediante perturbaciones',
     isActive: true,
-    orbitRadius: 280,
-    orbitSpeed: 16,
     size: 52,
     theory: {
       definition: 'Una onda mecánica es una perturbación que se propaga a través de un medio material transportando energía sin transporte de materia. Pueden ser transversales o longitudinales.',
@@ -192,8 +180,6 @@ export const planets: Planet[] = [
     icon: '➡️',
     description: 'Magnitudes con dirección y sentido',
     isActive: true,
-    orbitRadius: 320,
-    orbitSpeed: 28,
     size: 46,
     theory: {
       definition: 'Un vector es una magnitud física caracterizada por tener módulo (intensidad), dirección y sentido. Es fundamental para describir cantidades como fuerza, velocidad y aceleración.',
@@ -224,8 +210,6 @@ export const planets: Planet[] = [
     icon: '🪐',
     description: 'Fuerza de atracción entre masas',
     isActive: true,
-    orbitRadius: 360,
-    orbitSpeed: 14,
     size: 58,
     theory: {
       definition: 'La Ley de Gravitación Universal de Newton establece que dos cuerpos se atraen con una fuerza directamente proporcional al producto de sus masas e inversamente proporcional al cuadrado de su distancia.',
@@ -256,8 +240,6 @@ export const planets: Planet[] = [
     icon: '☀️',
     description: 'Leyes del movimiento planetario',
     isActive: true,
-    orbitRadius: 400,
-    orbitSpeed: 12,
     size: 50,
     theory: {
       definition: 'Las tres leyes de Kepler describen el movimiento de los planetas alrededor del Sol, derivadas empíricamente de observaciones astronómicas precisas.',
@@ -288,8 +270,6 @@ export const planets: Planet[] = [
     icon: '🔥',
     description: 'Transferencia de energía térmica',
     isActive: true,
-    orbitRadius: 440,
-    orbitSpeed: 20,
     size: 48,
     theory: {
       definition: 'El calor es la transferencia de energía entre cuerpos debido a una diferencia de temperatura. La temperatura es una medida del estado térmico de un cuerpo.',
@@ -320,8 +300,6 @@ export const planets: Planet[] = [
     icon: '⚡',
     description: 'Conservación y transformación de energía',
     isActive: true,
-    orbitRadius: 480,
-    orbitSpeed: 24,
     size: 54,
     theory: {
       definition: 'El trabajo es la transferencia de energía mediante una fuerza. La energía es la capacidad de realizar trabajo. Se conserva en sistemas aislados.',
@@ -352,8 +330,6 @@ export const planets: Planet[] = [
     icon: '🎯',
     description: 'Cantidad de movimiento e impulso',
     isActive: true,
-    orbitRadius: 520,
-    orbitSpeed: 18,
     size: 44,
     theory: {
       definition: 'El momento lineal (o cantidad de movimiento) es una magnitud vectorial que relaciona la masa y la velocidad de un objeto. Se conserva en ausencia de fuerzas externas.',
@@ -384,8 +360,6 @@ export const planets: Planet[] = [
     icon: '🏹',
     description: 'Combinación de MRU y MRUA',
     isActive: true,
-    orbitRadius: 560,
-    orbitSpeed: 22,
     size: 50,
     theory: {
       definition: 'El movimiento parabólico es la composición de un movimiento rectilíneo uniforme (horizontal) y un movimiento rectilíneo uniformemente acelerado (vertical). La trayectoria resultante es una parábola.',
@@ -416,8 +390,6 @@ export const planets: Planet[] = [
     icon: '🧲',
     description: 'Campos magnéticos e inducción electromagnética',
     isActive: true,
-    orbitRadius: 600,
-    orbitSpeed: 15,
     size: 52,
     theory: {
       definition: 'El magnetismo es un fenómeno físico mediado por campos magnéticos. La inducción electromagnética es la generación de corriente eléctrica mediante la variación de un campo magnético.',
@@ -448,8 +420,6 @@ export const planets: Planet[] = [
     icon: '⬆️',
     description: 'Movimiento vertical bajo gravedad',
     isActive: true,
-    orbitRadius: 640,
-    orbitSpeed: 26,
     size: 42,
     theory: {
       definition: 'El lanzamiento vertical es un movimiento en una dimensión bajo la acción de la gravedad. Puede ser hacia arriba (subida) o hacia abajo (caída). La aceleración es siempre g = 9.8 m/s² hacia abajo.',
@@ -480,8 +450,6 @@ export const planets: Planet[] = [
     icon: '➡️',
     description: 'Movimiento a velocidad constante',
     isActive: true,
-    orbitRadius: 680,
-    orbitSpeed: 30,
     size: 40,
     theory: {
       definition: 'El MRU es el movimiento más simple: un cuerpo se mueve en línea recta con velocidad constante. No hay aceleración, por lo que la velocidad no cambia.',
@@ -512,8 +480,6 @@ export const planets: Planet[] = [
     icon: '⏰',
     description: 'Física a velocidades cercanas a la luz',
     isActive: true,
-    orbitRadius: 720,
-    orbitSpeed: 10,
     size: 48,
     theory: {
       definition: 'La Relatividad Especial de Einstein describe la física a velocidades cercanas a la velocidad de la luz. Establece que las leyes de la física son iguales en todos los sistemas de referencia inerciales.',
@@ -544,8 +510,6 @@ export const planets: Planet[] = [
     icon: '🍎',
     description: 'Fundamentos de la mecánica clásica',
     isActive: true,
-    orbitRadius: 760,
-    orbitSpeed: 8,
     size: 56,
     theory: {
       definition: 'Las tres leyes de Newton son los fundamentos de la mecánica clásica. Describen la relación entre las fuerzas que actúan sobre un cuerpo y el movimiento que resulta.',
@@ -576,8 +540,6 @@ export const planets: Planet[] = [
     icon: '🔒',
     description: 'Nuevos temas en desarrollo',
     isActive: false,
-    orbitRadius: 800,
-    orbitSpeed: 35,
     size: 38,
     theory: {
       definition: 'Este planeta representa los temas que estarán disponibles en futuras actualizaciones de FisicaInador.',
