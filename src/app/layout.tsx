@@ -14,24 +14,36 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "FisicaInador - Tu Universo de Física Pre-Universitaria",
+  description: "Plataforma educativa de física con temática espacial para estudiantes pre-universitarios. Aprende mecánica, electromagnetismo, ondas y más explorando planetas.",
+  keywords: ["física", "pre-universitario", "educación", "mecánica", "electromagnetismo", "ondas", "Newton", "Kepler", "leyes de física", "aprender física", "edutainment"],
+  authors: [{ name: "FisicaInador Team" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "FisicaInador - Tu Universo de Física",
+    description: "Explora el universo de la física a través de planetas interactivos. Aprende mecánica, electromagnetismo, ondas y más.",
+    url: "https://fisicainador.com",
+    siteName: "FisicaInador",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "FisicaInador - Explora el Universo de la Física",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "FisicaInador - Tu Universo de Física Pre-Universitaria",
+    description: "Aprende física explorando planetas interactivos. Temas: Leyes de Newton, Hooke, Circuitos, Ondas y más.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -41,9 +53,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning className="dark">
+      <head>
+        <meta name="theme-color" content="#0a0a1a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground overflow-x-hidden`}
       >
         {children}
         <Toaster />
