@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMaster - Tu Asistente de Estudio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Burbujas flotantes */
+        .bubble {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.15;
+            animation: float 12s infinite ease-in-out;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.15; }
+            90% { opacity: 0.15; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Tarjetas con glow */
+        .glow-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .glow-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Animaciones */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.6s ease forwards;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-icon {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Botones de opción */
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+        }
+        
+        .option-btn.selected {
+            background: rgba(139, 92, 246, 0.3) !important;
+            border-color: #8b5cf6 !important;
+        }
+        
+        .option-btn.correct {
+            background: rgba(16, 185, 129, 0.3) !important;
+            border-color: #10b981 !important;
+        }
+        
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.3) !important;
+            border-color: #ef4444 !important;
+        }
+        
+        /* Progress bar */
+        .progress-fill {
+            transition: width 0.5s ease;
+        }
+        
+        /* Ocultar pantallas */
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        /* Estrellas decorativas */
+        .star {
+            position: fixed;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Estrellas de fondo -->
+    <div id="stars"></div>
+    
+    <!-- Burbujas flotantes -->
+    <div id="bubbles"></div>
+
+    <!-- ===== PANTALLA DE INICIO ===== -->
+    <div id="screen-home" class="screen active min-h-screen flex flex-col items-center justify-center p-6">
+        <div class="text-center mb-12 fade-in">
+            <div class="text-6xl mb-4 pulse-icon">🎓</div>
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent mb-3">
+                StudyMaster
+            </h1>
+            <p class="text-white/60 text-lg">Tu asistente inteligente para estudiar</p>
+        </div>
+
+        <div class="w-full max-w-md space-y-4">
+            <p class="text-center text-white/80 text-xl font-medium mb-6 slide-up" style="animation-delay: 0.2s">
+                ¿Qué quieres estudiar hoy?
+            </p>
+            
+            <!-- Razonamiento -->
+            <div class="glow-card rounded-2xl p-5 cursor-pointer slide-up" style="animation-delay: 0.3s" onclick="goToScreen('universities', 'razonamiento')">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                        <span class="text-2xl">🧠</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold">Razonamiento</h3>
+                        <p class="text-white/60 text-sm">Desarrolla tu mente lógica</p>
+                    </div>
+                    <svg class="w-6 h-6 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Conocimiento -->
+            <div class="glow-card rounded-2xl p-5 cursor-pointer slide-up" style="animation-delay: 0.4s" onclick="goToScreen('universities', 'conocimiento')">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                        <span class="text-2xl">📚</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold">Conocimiento</h3>
+                        <p class="text-white/60 text-sm">Amplía tu cultura general</p>
+                    </div>
+                    <svg class="w-6 h-6 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Universidad Privada -->
+            <div class="glow-card rounded-2xl p-5 cursor-pointer slide-up" style="animation-delay: 0.5s" onclick="goToScreen('universities', 'universidad_privada')">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+                        <span class="text-2xl">🎓</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold">Universidad Privada</h3>
+                        <p class="text-white/60 text-sm">Prepárate para el éxito</p>
+                    </div>
+                    <svg class="w-6 h-6 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de admin -->
+        <button onclick="openAdmin()" class="fixed bottom-6 right-6 w-14 h-14 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all">
+            <svg class="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ===== PANTALLA DE UNIVERSIDADES ===== -->
+    <div id="screen-universities" class="screen min-h-screen flex flex-col items-center justify-center p-6">
+        <button onclick="goBack('home')" class="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span>Volver</span>
+        </button>
+
+        <div class="text-center mb-10 fade-in">
+            <div class="flex items-center justify-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center" id="cat-icon">
+                    <span class="text-2xl">🧠</span>
+                </div>
+                <h2 class="text-3xl font-bold" id="cat-title">Razonamiento</h2>
+            </div>
+            <p class="text-white/60">Selecciona tu universidad</p>
+        </div>
+
+        <div id="universities-list" class="w-full max-w-md space-y-4">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <!-- ===== PANTALLA DE TIPOS ===== -->
+    <div id="screen-types" class="screen min-h-screen flex flex-col items-center justify-center p-6">
+        <button onclick="goBack('universities')" class="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span>Volver</span>
+        </button>
+
+        <div class="text-center mb-10 fade-in">
+            <div class="flex items-center justify-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <span class="text-xl">🏛️</span>
+                </div>
+                <h2 class="text-3xl font-bold" id="uni-title">UTA</h2>
+            </div>
+            <p class="text-white/60">Elige el tipo de ejercicio</p>
+        </div>
+
+        <div class="w-full max-w-lg grid grid-cols-2 gap-4" id="types-list">
+            <!-- Numérico -->
+            <div class="glow-card rounded-2xl p-6 cursor-pointer text-center" onclick="startQuiz('numerico')">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                    <span class="text-2xl">📊</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Numérico</h3>
+                <p class="text-white/50 text-sm" id="count-numerico">0 preguntas</p>
+            </div>
+            
+            <!-- Lógico -->
+            <div class="glow-card rounded-2xl p-6 cursor-pointer text-center" onclick="startQuiz('logico')">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+                    <span class="text-2xl">🔢</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Lógico</h3>
+                <p class="text-white/50 text-sm" id="count-logico">0 preguntas</p>
+            </div>
+            
+            <!-- Verbal -->
+            <div class="glow-card rounded-2xl p-6 cursor-pointer text-center" onclick="startQuiz('verbal')">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
+                    <span class="text-2xl">📝</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Verbal</h3>
+                <p class="text-white/50 text-sm" id="count-verbal">0 preguntas</p>
+            </div>
+            
+            <!-- Simulacro -->
+            <div class="glow-card rounded-2xl p-6 cursor-pointer text-center" onclick="startQuiz('simulacro')">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
+                    <span class="text-2xl">🎯</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Simulacro</h3>
+                <p class="text-white/50 text-sm" id="count-simulacro">0 preguntas</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PANTALLA DE QUIZ ===== -->
+    <div id="screen-quiz" class="screen min-h-screen flex flex-col p-6">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="goBack('types')" class="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                <span>Salir</span>
+            </button>
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full">
+                    <span class="text-amber-400">⭐</span>
+                    <span class="font-bold" id="score">0</span>
+                </div>
+                <div class="text-white/60">
+                    <span id="question-num">1</span> / <span id="total-questions">5</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full h-2 bg-white/10 rounded-full mb-8 overflow-hidden">
+            <div id="progress-bar" class="progress-fill h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style="width: 20%"></div>
+        </div>
+
+        <!-- Pregunta -->
+        <div id="question-container" class="flex-1 flex flex-col">
+            <div class="glow-card rounded-2xl p-6 mb-6">
+                <h2 class="text-xl md:text-2xl font-medium leading-relaxed" id="question-text">
+                    ¿Pregunta de ejemplo?
+                </h2>
+            </div>
+
+            <!-- Opciones -->
+            <div id="options-container" class="grid gap-3 mb-6">
+                <!-- Se llena dinámicamente -->
+            </div>
+
+            <!-- Botón confirmar -->
+            <button id="btn-confirm" onclick="confirmAnswer()" class="py-4 rounded-xl font-bold text-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white opacity-50 cursor-not-allowed" disabled>
+                Confirmar Respuesta
+            </button>
+        </div>
+
+        <!-- Sin preguntas -->
+        <div id="no-questions" class="flex-1 flex flex-col items-center justify-center hidden">
+            <span class="text-6xl mb-4">✨</span>
+            <h2 class="text-2xl font-bold mb-2">¡No hay preguntas!</h2>
+            <p class="text-white/60 mb-6">Agrega preguntas desde el panel de administración</p>
+            <button onclick="openAdmin()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl font-medium">
+                Agregar Preguntas
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== PANTALLA DE RESULTADOS ===== -->
+    <div id="screen-results" class="screen min-h-screen flex flex-col items-center justify-center p-6">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4 pulse-icon">🏆</div>
+            <h1 class="text-3xl font-bold mb-2">¡Quiz Completado!</h1>
+            <p class="text-white/60">Has terminado el ejercicio</p>
+        </div>
+        
+        <div class="glow-card rounded-2xl p-8 mb-8 text-center">
+            <div class="text-5xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mb-2">
+                <span id="final-score">0</span> / <span id="final-total">5</span>
+            </div>
+            <p class="text-white/60 mb-4">Respuestas correctas</p>
+            <div class="w-48 h-3 bg-white/10 rounded-full overflow-hidden mx-auto">
+                <div id="final-progress" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500" style="width: 0%"></div>
+            </div>
+            <p class="text-white/40 text-sm mt-2"><span id="final-percent">0</span>% de aciertos</p>
+        </div>
+        
+        <div class="flex gap-4">
+            <button onclick="restartQuiz()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl font-medium">
+                Intentar de Nuevo
+            </button>
+            <button onclick="goToScreen('home')" class="px-6 py-3 bg-white/10 rounded-xl font-medium">
+                Volver al Inicio
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL DE ADMINISTRACIÓN ===== -->
+    <div id="admin-modal" class="modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-white/10">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Gestión de Preguntas
+                </h2>
+                <button onclick="closeAdmin()" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex h-[calc(90vh-60px)]">
+                <!-- Sidebar -->
+                <div class="w-64 border-r border-white/10 p-4 overflow-y-auto">
+                    <p class="text-white/40 text-sm mb-4">Selecciona categoría:</p>
+                    <div id="admin-sidebar">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Contenido -->
+                <div class="flex-1 p-4 overflow-y-auto">
+                    <div id="admin-content" class="text-center py-12 text-white/40">
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        </svg>
+                        <p>Selecciona una categoría del menú lateral</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL NUEVA PREGUNTA ===== -->
+    <div id="new-question-modal" class="modal fixed inset-0 bg-black/60 z-[60] items-center justify-center p-4">
+        <div class="bg-gray-800 border border-white/10 rounded-2xl p-6 w-full max-w-lg">
+            <h4 class="text-lg font-bold mb-4">Nueva Pregunta</h4>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-white/60 text-sm mb-1 block">Pregunta</label>
+                    <textarea id="new-q-text" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white resize-none" rows="3"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-white/60 text-sm mb-1 block">Opción A</label>
+                        <input type="text" id="new-q-opt-a" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-sm mb-1 block">Opción B</label>
+                        <input type="text" id="new-q-opt-b" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-sm mb-1 block">Opción C</label>
+                        <input type="text" id="new-q-opt-c" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-sm mb-1 block">Opción D</label>
+                        <input type="text" id="new-q-opt-d" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-white/60 text-sm mb-1 block">Respuesta Correcta</label>
+                    <select id="new-q-correct" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
+                        <option value="0">Opción A</option>
+                        <option value="1">Opción B</option>
+                        <option value="2">Opción C</option>
+                        <option value="3">Opción D</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeNewQuestion()" class="px-4 py-2 bg-white/10 rounded-lg">Cancelar</button>
+                <button onclick="saveNewQuestion()" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg font-medium">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== BASE DE DATOS DE PREGUNTAS =====
+        let questionsDB = {
+            razonamiento: {
+                uta: {
+                    numerico: [
+                        {
+                            id: '1',
+                            question: 'Si un tren viaja a 80 km/h, ¿cuánto tiempo tardará en recorrer 240 km?',
+                            options: ['2 horas', '3 horas', '4 horas', '5 horas'],
+                            correctAnswer: 1,
+                            explanation: 'Tiempo = Distancia / Velocidad = 240 / 80 = 3 horas'
+                        },
+                        {
+                            id: '2',
+                            question: '¿Cuál es el 25% de 800?',
+                            options: ['150', '200', '250', '300'],
+                            correctAnswer: 1,
+                            explanation: '25% de 800 = 800 × 0.25 = 200'
+                        },
+                        {
+                            id: '3',
+                            question: 'Si 3x + 7 = 22, ¿cuál es el valor de x?',
+                            options: ['3', '4', '5', '6'],
+                            correctAnswer: 2,
+                            explanation: '3x = 22 - 7 = 15, entonces x = 5'
+                        },
+                        {
+                            id: '4',
+                            question: 'Un rectángulo tiene 12 cm de base y 8 cm de altura. ¿Cuál es su área?',
+                            options: ['80 cm²', '96 cm²', '40 cm²', '100 cm²'],
+                            correctAnswer: 1,
+                            explanation: 'Área = base × altura = 12 × 8 = 96 cm²'
+                        },
+                        {
+                            id: '5',
+                            question: '¿Qué número continúa la serie: 2, 6, 18, 54, ...?',
+                            options: ['108', '162', '216', '144'],
+                            correctAnswer: 1,
+                            explanation: 'Cada número se multiplica por 3: 54 × 3 = 162'
+                        }
+                    ],
+                    logico: [
+                        {
+                            id: '1',
+                            question: 'Si todos los perros son animales, y Max es un perro, entonces:',
+                            options: ['Max no es un animal', 'Max es un animal', 'Max puede ser un animal', 'No se puede determinar'],
+                            correctAnswer: 1,
+                            explanation: 'Silogismo básico: si todos los A son B, y C es A, entonces C es B'
+                        }
+                    ],
+                    verbal: [],
+                    simulacro: []
+                },
+                unach: {
+                    numerico: [
+                        {
+                            id: '1',
+                            question: '¿Cuánto es 15³?',
+                            options: ['2250', '3375', '4500', '5000'],
+                            correctAnswer: 1,
+                            explanation: '15³ = 15 × 15 × 15 = 3375'
+                        }
+                    ],
+                    logico: [],
+                    verbal: [],
+                    simulacro: []
+                }
+            },
+            conocimiento: {
+                general: {
+                    cultura: [],
+                    historia: [],
+                    ciencia: [],
+                    simulacro: []
+                }
+            },
+            universidad_privada: {
+                privada1: {
+                    numerico: [],
+                    logico: [],
+                    verbal: [],
+                    simulacro: []
+                }
+            }
+        };
+
+        // Variables de estado
+        let currentScreen = 'home';
+        let selectedCategory = '';
+        let selectedUniversity = '';
+        let selectedType = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedAnswer = null;
+        let answered = false;
+        let adminCat = '';
+        let adminUni = '';
+        let adminType = '';
+
+        // Configuración de categorías
+        const categories = {
+            razonamiento: { name: 'Razonamiento', icon: '🧠', gradient: 'from-purple-500 to-pink-500' },
+            conocimiento: { name: 'Conocimiento', icon: '📚', gradient: 'from-blue-500 to-cyan-500' },
+            universidad_privada: { name: 'Universidad Privada', icon: '🎓', gradient: 'from-amber-500 to-orange-500' }
+        };
+
+        const universities = {
+            razonamiento: [
+                { id: 'uta', name: 'UTA', fullName: 'Universidad Técnica de Ambato' },
+                { id: 'unach', name: 'UNACH', fullName: 'Universidad Nacional de Chimborazo' }
+            ],
+            conocimiento: [
+                { id: 'general', name: 'General', fullName: 'Conocimiento General' }
+            ],
+            universidad_privada: [
+                { id: 'privada1', name: 'Universidad A', fullName: 'Universidad Privada A' }
+            ]
+        };
+
+        // ===== FUNCIONES DE INICIALIZACIÓN =====
+        function init() {
+            createStars();
+            createBubbles();
+            updateAdminSidebar();
+        }
+
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        }
+
+        function createBubbles() {
+            const container = document.getElementById('bubbles');
+            const colors = ['#a855f7', '#3b82f6', '#ec4899', '#f59e0b'];
+            for (let i = 0; i < 10; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.width = (30 + Math.random() * 60) + 'px';
+                bubble.style.height = bubble.style.width;
+                bubble.style.background = colors[i % colors.length];
+                bubble.style.left = (i * 10 + Math.random() * 5) + '%';
+                bubble.style.animationDelay = (Math.random() * 5) + 's';
+                bubble.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(bubble);
+            }
+        }
+
+        // ===== NAVEGACIÓN =====
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+
+        function goToScreen(screen, category = '') {
+            if (screen === 'universities' && category) {
+                selectedCategory = category;
+                renderUniversities();
+            }
+            showScreen(screen);
+        }
+
+        function goBack(screen) {
+            showScreen(screen);
+        }
+
+        function renderUniversities() {
+            const cat = categories[selectedCategory];
+            document.getElementById('cat-title').textContent = cat.name;
+            document.getElementById('cat-icon').innerHTML = `<span class="text-2xl">${cat.icon}</span>`;
+            document.getElementById('cat-icon').className = `w-12 h-12 rounded-xl bg-gradient-to-br ${cat.gradient} flex items-center justify-center`;
+
+            const list = document.getElementById('universities-list');
+            list.innerHTML = '';
+
+            const uniList = universities[selectedCategory] || [];
+            uniList.forEach((uni, index) => {
+                const div = document.createElement('div');
+                div.className = 'glow-card rounded-2xl p-5 cursor-pointer slide-up';
+                div.style.animationDelay = (0.2 + index * 0.1) + 's';
+                div.onclick = () => selectUniversity(uni.id);
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                            <span class="text-2xl">🏛️</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold">${uni.name}</h3>
+                            <p class="text-white/60 text-sm">${uni.fullName}</p>
+                        </div>
+                        <svg class="w-6 h-6 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectUniversity(uniId) {
+            selectedUniversity = uniId;
+            const uni = universities[selectedCategory].find(u => u.id === uniId);
+            document.getElementById('uni-title').textContent = uni.name;
+            updateTypeCounts();
+            showScreen('types');
+        }
+
+        function updateTypeCounts() {
+            const types = ['numerico', 'logico', 'verbal', 'simulacro'];
+            types.forEach(type => {
+                const count = questionsDB[selectedCategory]?.[selectedUniversity]?.[type]?.length || 0;
+                const el = document.getElementById('count-' + type);
+                if (el) el.textContent = count + ' preguntas';
+            });
+        }
+
+        // ===== QUIZ =====
+        function startQuiz(type) {
+            selectedType = type;
+            currentQuestionIndex = 0;
+            score = 0;
+            selectedAnswer = null;
+            answered = false;
+            document.getElementById('score').textContent = '0';
+            
+            const questions = questionsDB[selectedCategory]?.[selectedUniversity]?.[selectedType] || [];
+            
+            if (questions.length === 0) {
+                document.getElementById('question-container').classList.add('hidden');
+                document.getElementById('no-questions').classList.remove('hidden');
+            } else {
+                document.getElementById('question-container').classList.remove('hidden');
+                document.getElementById('no-questions').classList.add('hidden');
+                document.getElementById('total-questions').textContent = questions.length;
+                renderQuestion();
+            }
+            
+            showScreen('quiz');
+        }
+
+        function renderQuestion() {
+            const questions = questionsDB[selectedCategory]?.[selectedUniversity]?.[selectedType] || [];
+            const q = questions[currentQuestionIndex];
+            
+            if (!q) return;
+            
+            document.getElementById('question-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('question-text').textContent = q.question;
+            document.getElementById('progress-bar').style.width = ((currentQuestionIndex + 1) / questions.length * 100) + '%';
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn glow-card rounded-xl p-4 text-left';
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">
+                            ${String.fromCharCode(65 + i)}
+                        </div>
+                        <span>${opt}</span>
+                    </div>
+                `;
+                btn.onclick = () => selectOption(i);
+                container.appendChild(btn);
+            });
+            
+            selectedAnswer = null;
+            answered = false;
+            updateConfirmButton();
+        }
+
+        function selectOption(index) {
+            if (answered) return;
+            
+            selectedAnswer = index;
+            
+            document.querySelectorAll('.option-btn').forEach((btn, i) => {
+                btn.classList.remove('selected');
+                if (i === index) btn.classList.add('selected');
+            });
+            
+            updateConfirmButton();
+        }
+
+        function updateConfirmButton() {
+            const btn = document.getElementById('btn-confirm');
+            if (selectedAnswer !== null && !answered) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function confirmAnswer() {
+            if (selectedAnswer === null || answered) return;
+            
+            answered = true;
+            const questions = questionsDB[selectedCategory]?.[selectedUniversity]?.[selectedType] || [];
+            const q = questions[currentQuestionIndex];
+            const isCorrect = selectedAnswer === q.correctAnswer;
+            
+            // Mostrar resultado
+            document.querySelectorAll('.option-btn').forEach((btn, i) => {
+                if (i === q.correctAnswer) {
+                    btn.classList.add('correct');
+                } else if (i === selectedAnswer && !isCorrect) {
+                    btn.classList.add('wrong');
+                }
+            });
+            
+            if (isCorrect) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+            
+            // Cambiar botón
+            const btn = document.getElementById('btn-confirm');
+            const isLast = currentQuestionIndex >= questions.length - 1;
+            btn.textContent = isLast ? 'Ver Resultados' : 'Siguiente Pregunta';
+            btn.onclick = isLast ? showResults : nextQuestion;
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            selectedAnswer = null;
+            answered = false;
+            
+            const btn = document.getElementById('btn-confirm');
+            btn.textContent = 'Confirmar Respuesta';
+            btn.onclick = confirmAnswer;
+            
+            renderQuestion();
+        }
+
+        function showResults() {
+            const questions = questionsDB[selectedCategory]?.[selectedUniversity]?.[selectedType] || [];
+            const total = questions.length;
+            const percent = Math.round((score / total) * 100);
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-total').textContent = total;
+            document.getElementById('final-percent').textContent = percent;
+            document.getElementById('final-progress').style.width = percent + '%';
+            
+            showScreen('results');
+        }
+
+        function restartQuiz() {
+            startQuiz(selectedType);
+        }
+
+        // ===== ADMINISTRACIÓN =====
+        function openAdmin() {
+            document.getElementById('admin-modal').classList.add('active');
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-modal').classList.remove('active');
+        }
+
+        function updateAdminSidebar() {
+            const sidebar = document.getElementById('admin-sidebar');
+            sidebar.innerHTML = '';
+            
+            Object.entries(questionsDB).forEach(([catId, catData]) => {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'mb-4';
+                catDiv.innerHTML = `<p class="text-white font-medium mb-2 capitalize">${catId.replace('_', ' ')}</p>`;
+                
+                Object.entries(catData).forEach(([uniId, uniData]) => {
+                    const uniDiv = document.createElement('div');
+                    uniDiv.className = 'ml-2 mb-2';
+                    uniDiv.innerHTML = `<p class="text-white/60 text-sm mb-1">${uniId.toUpperCase()}</p>`;
+                    
+                    Object.keys(uniData).forEach(typeId => {
+                        const count = uniData[typeId].length;
+                        const btn = document.createElement('button');
+                        btn.className = `w-full text-left px-3 py-2 rounded-lg text-sm mb-1 transition-colors ${
+                            adminCat === catId && adminUni === uniId && adminType === typeId
+                                ? 'bg-purple-500/20 text-purple-300'
+                                : 'text-white/40 hover:bg-white/5'
+                        }`;
+                        btn.textContent = `${typeId} (${count})`;
+                        btn.onclick = () => selectAdminCategory(catId, uniId, typeId);
+                        uniDiv.appendChild(btn);
+                    });
+                    
+                    catDiv.appendChild(uniDiv);
+                });
+                
+                sidebar.appendChild(catDiv);
+            });
+        }
+
+        function selectAdminCategory(catId, uniId, typeId) {
+            adminCat = catId;
+            adminUni = uniId;
+            adminType = typeId;
+            updateAdminSidebar();
+            renderAdminQuestions();
+        }
+
+        function renderAdminQuestions() {
+            const content = document.getElementById('admin-content');
+            const questions = questionsDB[adminCat]?.[adminUni]?.[adminType] || [];
+            
+            content.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium">Preguntas de ${adminType}</h3>
+                    <button onclick="openNewQuestion()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Nueva Pregunta
+                    </button>
+                </div>
+                <div class="space-y-3" id="questions-list">
+                    ${questions.length === 0 ? `
+                        <div class="text-center py-12 text-white/40">
+                            <span class="text-4xl mb-4 block">✨</span>
+                            <p>No hay preguntas en esta categoría</p>
+                        </div>
+                    ` : questions.map((q, i) => `
+                        <div class="glow-card rounded-xl p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="text-white/40 text-sm mb-1">Pregunta ${i + 1}</p>
+                                    <p class="text-white mb-2">${q.question}</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${q.options.map((opt, j) => `
+                                            <span class="px-3 py-1 rounded-full text-xs ${
+                                                j === q.correctAnswer
+                                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                                    : 'bg-white/10 text-white/60'
+                                            }">
+                                                ${String.fromCharCode(65 + j)}: ${opt}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <button onclick="deleteQuestion('${q.id}')" class="p-2 hover:bg-red-500/20 rounded-lg transition-colors">
+                                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function openNewQuestion() {
+            document.getElementById('new-question-modal').classList.add('active');
+            document.getElementById('new-q-text').value = '';
+            document.getElementById('new-q-opt-a').value = '';
+            document.getElementById('new-q-opt-b').value = '';
+            document.getElementById('new-q-opt-c').value = '';
+            document.getElementById('new-q-opt-d').value = '';
+            document.getElementById('new-q-correct').value = '0';
+        }
+
+        function closeNewQuestion() {
+            document.getElementById('new-question-modal').classList.remove('active');
+        }
+
+        function saveNewQuestion() {
+            const text = document.getElementById('new-q-text').value.trim();
+            const optA = document.getElementById('new-q-opt-a').value.trim();
+            const optB = document.getElementById('new-q-opt-b').value.trim();
+            const optC = document.getElementById('new-q-opt-c').value.trim();
+            const optD = document.getElementById('new-q-opt-d').value.trim();
+            const correct = parseInt(document.getElementById('new-q-correct').value);
+            
+            if (!text || !optA || !optB || !optC || !optD) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+            
+            const newQ = {
+                id: Date.now().toString(),
+                question: text,
+                options: [optA, optB, optC, optD],
+                correctAnswer: correct
+            };
+            
+            if (!questionsDB[adminCat]) questionsDB[adminCat] = {};
+            if (!questionsDB[adminCat][adminUni]) questionsDB[adminCat][adminUni] = {};
+            if (!questionsDB[adminCat][adminUni][adminType]) questionsDB[adminCat][adminUni][adminType] = [];
+            
+            questionsDB[adminCat][adminUni][adminType].push(newQ);
+            
+            closeNewQuestion();
+            updateAdminSidebar();
+            renderAdminQuestions();
+        }
+
+        function deleteQuestion(id) {
+            if (!confirm('¿Eliminar esta pregunta?')) return;
+            
+            questionsDB[adminCat][adminUni][adminType] = questionsDB[adminCat][adminUni][adminType].filter(q => q.id !== id);
+            updateAdminSidebar();
+            renderAdminQuestions();
+        }
+
+        // Inicializar
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEXICON RUNNER - Aprende Sinónimos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== PANTALLA DE INICIO ===== */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        .game-title {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px #ff6b35, 0 0 40px #ff6b35, 0 0 60px #ff6b35;
+            margin-bottom: 10px;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        .game-subtitle {
+            font-size: 1.2rem;
+            color: #f7931e;
+            margin-bottom: 40px;
+            letter-spacing: 3px;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 20px #ff6b35, 0 0 40px #ff6b35; }
+            to { text-shadow: 0 0 30px #ffd700, 0 0 60px #ffd700, 0 0 80px #ffd700; }
+        }
+
+        /* Personaje en pantalla de inicio */
+        .nova-intro {
+            width: 150px;
+            height: 200px;
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a1a2e;
+            background: linear-gradient(135deg, #ffd700 0%, #ff6b35 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+        }
+
+        .start-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.6);
+        }
+
+        /* ===== ÁREA DE JUEGO ===== */
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .hud-value {
+            color: #ffd700;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        #level-indicator {
+            background: linear-gradient(135deg, #ff6b35, #ffd700);
+            padding: 8px 25px;
+            border-radius: 25px;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        #combo-display {
+            color: #00ff88;
+            font-size: 1.2rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        #combo-display.active {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        /* Área del Personaje */
+        #character-area {
+            position: absolute;
+            bottom: 50%;
+            left: 50px;
+            z-index: 10;
+        }
+
+        .nova {
+            width: 80px;
+            height: 120px;
+            position: relative;
+            animation: idle 1s ease-in-out infinite;
+        }
+
+        @keyframes idle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .nova.jumping {
+            animation: jump 0.8s ease-out forwards;
+        }
+
+        @keyframes jump {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-150px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        .nova.hurt {
+            animation: hurt 0.5s ease-out;
+        }
+
+        @keyframes hurt {
+            0%, 50%, 100% { transform: translateX(0); }
+            25%, 75% { transform: translateX(-20px); }
+        }
+
+        /* Plataforma */
+        #platform {
+            position: absolute;
+            bottom: 30%;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, #2d4a3e 0%, #1a2f27 100%);
+            border-top: 5px solid #4a8c6f;
+        }
+
+        #platform::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(90deg, #3d6b54 0px, #3d6b54 50px, #2d4a3e 50px, #2d4a3e 100px);
+        }
+
+        /* Cartel de Palabra */
+        #word-display {
+            position: absolute;
+            bottom: 55%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #2a2a4a 0%, #1a1a3a 100%);
+            padding: 30px 60px;
+            border-radius: 20px;
+            border: 4px solid #ff6b35;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.5), inset 0 0 20px rgba(255, 107, 53, 0.1);
+            z-index: 20;
+        }
+
+        #current-word {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #ff6b35;
+        }
+
+        #word-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #ff6b35;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        /* Opciones de Respuesta */
+        #options-area {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 30;
+        }
+
+        .option-btn {
+            padding: 20px 35px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%);
+            border: 3px solid #5a5a8a;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .option-btn:hover {
+            background: linear-gradient(135deg, #4a4a6a 0%, #3a3a5a 100%);
+            border-color: #ffd700;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(135deg, #00c853 0%, #00a844 100%);
+            border-color: #00ff88;
+            animation: correctPulse 0.5s ease-out;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .option-btn.wrong {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            border-color: #ff6666;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Barra de Progreso de Nivel */
+        #progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff6b35, #ffd700, #00ff88);
+            transition: width 0.5s ease;
+        }
+
+        /* Partículas de Victoria */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: particleFade 1s ease-out forwards;
+        }
+
+        @keyframes particleFade {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-200px) scale(0);
+            }
+        }
+
+        /* Mensaje de Feedback */
+        #feedback-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #ff6b35;
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #feedback-message.show {
+            animation: feedbackPop 0.8s ease-out forwards;
+        }
+
+        @keyframes feedbackPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Pantalla de Fin de Juego */
+        #end-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+        }
+
+        .end-title {
+            font-size: 3rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ffd700;
+        }
+
+        .end-stats {
+            color: #fff;
+            font-size: 1.3rem;
+            margin: 10px 0;
+        }
+
+        .end-score {
+            font-size: 2.5rem;
+            color: #00ff88;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #1a1a2e;
+            background: linear-gradient(135deg, #00ff88 0%, #00c853 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Aura de Combo */
+        .nova.combo-aura::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
+            animation: auraGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes auraGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        /* Fondo animado de estrellas */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Instrucciones */
+        .instructions {
+            color: #888;
+            font-size: 1rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Estrellas de fondo -->
+    <div class="stars" id="stars"></div>
+
+    <!-- Pantalla de Inicio -->
+    <div id="start-screen">
+        <h1 class="game-title">LEXICON RUNNER</h1>
+        <p class="game-subtitle">⚔️ DOMINA EL PODER DE LOS SINÓNIMOS ⚔️</p>
+        
+        <!-- Personaje Nova SVG -->
+        <svg class="nova-intro" viewBox="0 0 100 150">
+            <!-- Cuerpo -->
+            <ellipse cx="50" cy="120" rx="25" ry="20" fill="#2a4a6a"/>
+            <!-- Capa -->
+            <path d="M25 90 Q50 110 75 90 L80 140 Q50 150 20 140 Z" fill="#ff6b35" opacity="0.8"/>
+            <!-- Cabeza -->
+            <circle cx="50" cy="50" r="30" fill="#ffd5b5"/>
+            <!-- Cabello naranja -->
+            <ellipse cx="50" cy="35" rx="32" ry="20" fill="#ff6b35"/>
+            <path d="M20 40 Q15 25 30 30 Q25 20 45 25 Q40 15 55 20 Q55 10 65 20 Q70 15 75 30 Q85 25 80 40" fill="#ff6b35"/>
+            <!-- Puntos de cabello más brillante -->
+            <circle cx="35" cy="30" r="3" fill="#ff8c5a"/>
+            <circle cx="55" cy="25" r="2" fill="#ff8c5a"/>
+            <circle cx="70" cy="32" r="2" fill="#ff8c5a"/>
+            <!-- Lentes -->
+            <circle cx="38" cy="52" r="12" fill="none" stroke="#333" stroke-width="3"/>
+            <circle cx="62" cy="52" r="12" fill="none" stroke="#333" stroke-width="3"/>
+            <line x1="50" y1="52" x2="50" y2="52" stroke="#333" stroke-width="2"/>
+            <line x1="50" y1="52" x2="50" y2="52" stroke="#333" stroke-width="2"/>
+            <line x1="26" y1="52" x2="20" y2="50" stroke="#333" stroke-width="2"/>
+            <line x1="74" y1="52" x2="80" y2="50" stroke="#333" stroke-width="2"/>
+            <!-- Cristal de lentes -->
+            <circle cx="38" cy="52" r="10" fill="rgba(100, 200, 255, 0.2)"/>
+            <circle cx="62" cy="52" r="10" fill="rgba(100, 200, 255, 0.2)"/>
+            <!-- Ojos detrás de lentes -->
+            <circle cx="38" cy="52" r="4" fill="#333"/>
+            <circle cx="62" cy="52" r="4" fill="#333"/>
+            <circle cx="39" cy="51" r="1.5" fill="#fff"/>
+            <circle cx="63" cy="51" r="1.5" fill="#fff"/>
+            <!-- Sonrisa -->
+            <path d="M40 68 Q50 75 60 68" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+            <!-- Brazos -->
+            <ellipse cx="20" cy="95" rx="8" ry="12" fill="#ffd5b5"/>
+            <ellipse cx="80" cy="95" rx="8" ry="12" fill="#ffd5b5"/>
+        </svg>
+
+        <button class="start-btn" onclick="startGame()">🎮 ¡COMENZAR AVENTURA!</button>
+        <p class="instructions">Selecciona el sinónimo correcto para avanzar<br>¡5 niveles te esperan!</p>
+    </div>
+
+    <!-- Pantalla de Juego -->
+    <div id="game-screen">
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-item">
+                <span class="hud-label">PUNTOS:</span>
+                <span class="hud-value" id="score">0</span>
+            </div>
+            <div id="level-indicator">NIVEL <span id="level">1</span>/5</div>
+            <div class="hud-item">
+                <span id="combo-display">🔥 COMBO x1</span>
+            </div>
+        </div>
+
+        <!-- Área del Personaje -->
+        <div id="character-area">
+            <svg class="nova" id="nova-character" viewBox="0 0 100 150">
+                <!-- Capa flotante -->
+                <path d="M25 90 Q50 110 75 90 L80 140 Q50 150 20 140 Z" fill="#ff6b35" opacity="0.8"/>
+                <!-- Cuerpo -->
+                <ellipse cx="50" cy="120" rx="25" ry="20" fill="#2a4a6a"/>
+                <!-- Cabeza -->
+                <circle cx="50" cy="50" r="30" fill="#ffd5b5"/>
+                <!-- Cabello naranja -->
+                <ellipse cx="50" cy="35" rx="32" ry="20" fill="#ff6b35"/>
+                <path d="M20 40 Q15 25 30 30 Q25 20 45 25 Q40 15 55 20 Q55 10 65 20 Q70 15 75 30 Q85 25 80 40" fill="#ff6b35"/>
+                <circle cx="35" cy="30" r="3" fill="#ff8c5a"/>
+                <circle cx="55" cy="25" r="2" fill="#ff8c5a"/>
+                <circle cx="70" cy="32" r="2" fill="#ff8c5a"/>
+                <!-- Lentes -->
+                <circle cx="38" cy="52" r="12" fill="none" stroke="#333" stroke-width="3"/>
+                <circle cx="62" cy="52" r="12" fill="none" stroke="#333" stroke-width="3"/>
+                <line x1="50" y1="52" x2="50" y2="52" stroke="#333" stroke-width="2"/>
+                <line x1="26" y1="52" x2="20" y2="50" stroke="#333" stroke-width="2"/>
+                <line x1="74" y1="52" x2="80" y2="50" stroke="#333" stroke-width="2"/>
+                <circle cx="38" cy="52" r="10" fill="rgba(100, 200, 255, 0.2)"/>
+                <circle cx="62" cy="52" r="10" fill="rgba(100, 200, 255, 0.2)"/>
+                <!-- Ojos -->
+                <circle cx="38" cy="52" r="4" fill="#333"/>
+                <circle cx="62" cy="52" r="4" fill="#333"/>
+                <circle cx="39" cy="51" r="1.5" fill="#fff"/>
+                <circle cx="63" cy="51" r="1.5" fill="#fff"/>
+                <!-- Sonrisa -->
+                <path d="M40 68 Q50 75 60 68" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                <!-- Brazos -->
+                <ellipse cx="20" cy="95" rx="8" ry="12" fill="#ffd5b5"/>
+                <ellipse cx="80" cy="95" rx="8" ry="12" fill="#ffd5b5"/>
+            </svg>
+        </div>
+
+        <!-- Plataforma -->
+        <div id="platform"></div>
+
+        <!-- Cartel de Palabra -->
+        <div id="word-display">
+            <span id="word-label">¿CUÁL ES EL SINÓNIMO DE...?</span>
+            <div id="current-word">EFÍMERO</div>
+        </div>
+
+        <!-- Opciones -->
+        <div id="options-area">
+            <button class="option-btn" onclick="checkAnswer(0)">Duradero</button>
+            <button class="option-btn" onclick="checkAnswer(1)">Pasajero</button>
+            <button class="option-btn" onclick="checkAnswer(2)">Pesado</button>
+            <button class="option-btn" onclick="checkAnswer(3)">Ruidoso</button>
+        </div>
+
+        <!-- Barra de Progreso -->
+        <div id="progress-bar">
+            <div id="progress-fill"></div>
+        </div>
+
+        <!-- Mensaje de Feedback -->
+        <div id="feedback-message">¡PERFECTO!</div>
+    </div>
+
+    <!-- Pantalla de Fin -->
+    <div id="end-screen">
+        <h1 class="end-title">🏆 ¡JUEGO COMPLETADO! 🏆</h1>
+        <p class="end-stats">Niveles superados: 5/5</p>
+        <p class="end-stats">Respuestas correctas: <span id="final-correct">0</span></p>
+        <p class="end-stats">Mejor combo: <span id="final-combo">0</span>x</p>
+        <p class="end-score">PUNTUACIÓN FINAL: <span id="final-score">0</span></p>
+        <button class="restart-btn" onclick="restartGame()">🔄 JUGAR DE NUEVO</button>
+    </div>
+
+    <script>
+        // ===== BASE DE DATOS DE PALABRAS =====
+        const wordDatabase = [
+            { word: "Efímero", correct: 1, options: ["Duradero", "Pasajero", "Pesado", "Ruidoso"] },
+            { word: "Ocioso", correct: 2, options: ["Trabajador", "Necesario", "Inactivo", "Brillante"] },
+            { word: "Cándido", correct: 2, options: ["Amargo", "Caliente", "Ingenuo", "Astuto"] },
+            { word: "Fútil", correct: 2, options: ["Importante", "Fuerte", "Insignificante", "Grande"] },
+            { word: "Locuaz", correct: 2, options: ["Callado", "Tímido", "Hablador", "Perezoso"] },
+            { word: "Yermo", correct: 3, options: ["Verde", "Fértil", "Húmedo", "Desértico"] },
+            { word: "Terso", correct: 3, options: ["Áspero", "Arrugado", "Sucio", "Liso"] },
+            { word: "Frugal", correct: 2, options: ["Exagerado", "Derrochador", "Moderado", "Abundante"] },
+            { word: "Encono", correct: 3, options: ["Paz", "Amor", "Alegría", "Rencor"] },
+            { word: "Álgido", correct: 1, options: ["Frío (literal)", "Culminante", "Inicial", "Tibio"] },
+            { word: "Proceloso", correct: 3, options: ["Tranquilo", "Simple", "Claro", "Tempestuoso"] },
+            { word: "Abyecto", correct: 2, options: ["Noble", "Elevado", "Vil", "Limpio"] },
+            { word: "Contumaz", correct: 3, options: ["Obediente", "Flexible", "Dócil", "Terco"] },
+            { word: "Exiguo", correct: 2, options: ["Amplio", "Suficiente", "Escaso", "Grande"] },
+            { word: "Lívido", correct: 2, options: ["Sonrojado", "Moreno", "Pálido", "Brillante"] },
+            { word: "Parsimonioso", correct: 3, options: ["Generoso", "Rápido", "Impaciente", "Lento"] },
+            { word: "Ufano", correct: 3, options: ["Triste", "Humilde", "Avergonzado", "Orgulloso"] },
+            { word: "Vate", correct: 2, options: ["Profeta", "Soldado", "Poeta", "Médico"] },
+            { word: "Zafio", correct: 3, options: ["Educado", "Sutil", "Elegante", "Grosero"] },
+            { word: "Probo", correct: 2, options: ["Mentiroso", "Malvado", "Honrado", "Ladrón"] },
+            { word: "Beligerante", correct: 3, options: ["Pacífico", "Neutral", "Amigable", "Hostil"] },
+            { word: "Dislate", correct: 3, options: ["Acierto", "Cordura", "Logro", "Disparate"] },
+            { word: "Heterogéneo", correct: 2, options: ["Uniforme", "Puro", "Diverso", "Idéntico"] },
+            { word: "Imberbe", correct: 3, options: ["Barbudo", "Viejo", "Peludo", "Joven"] },
+            { word: "Letífico", correct: 2, options: ["Triste", "Aburrido", "Alegre", "Serio"] }
+        ];
+
+        // ===== VARIABLES DE ESTADO DEL JUEGO =====
+        let currentLevel = 1;
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let correctAnswers = 0;
+        let currentWords = [];
+        let currentQuestion = null;
+        let canAnswer = true;
+
+        // ===== FUNCIONES DE UTILIDAD =====
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function createParticles(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 15 + 5;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.background = color;
+                particle.style.left = (x + Math.random() * 100 - 50) + 'px';
+                particle.style.top = (y + Math.random() * 50) + 'px';
+                particle.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 1000);
+            }
+        }
+
+        // ===== FUNCIONES DEL JUEGO =====
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            // Reiniciar variables
+            currentLevel = 1;
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            correctAnswers = 0;
+            
+            // Seleccionar 5 palabras aleatorias
+            currentWords = shuffleArray(wordDatabase).slice(0, 5);
+            
+            updateHUD();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentLevel > 5) {
+                endGame();
+                return;
+            }
+
+            currentQuestion = currentWords[currentLevel - 1];
+            canAnswer = true;
+
+            // Actualizar palabra mostrada
+            document.getElementById('current-word').textContent = currentQuestion.word.toUpperCase();
+
+            // Actualizar opciones (mezclar visualmente pero mantener índice correcto)
+            const optionsArea = document.getElementById('options-area');
+            const buttons = optionsArea.querySelectorAll('.option-btn');
+            
+            // Crear array de opciones con su índice original
+            const optionsWithIndex = currentQuestion.options.map((opt, idx) => ({
+                text: opt,
+                isCorrect: idx === currentQuestion.correct
+            }));
+            
+            // Mezclar opciones
+            const shuffledOptions = shuffleArray(optionsWithIndex);
+            
+            // Actualizar botones
+            buttons.forEach((btn, idx) => {
+                btn.textContent = shuffledOptions[idx].text;
+                btn.className = 'option-btn';
+                btn.disabled = false;
+                btn.dataset.correct = shuffledOptions[idx].isCorrect;
+            });
+
+            // Actualizar barra de progreso
+            document.getElementById('progress-fill').style.width = ((currentLevel - 1) * 20) + '%';
+        }
+
+        function checkAnswer(buttonIndex) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const buttons = document.querySelectorAll('.option-btn');
+            const selectedButton = buttons[buttonIndex];
+            const isCorrect = selectedButton.dataset.correct === 'true';
+
+            const nova = document.getElementById('nova-character');
+            const feedbackMsg = document.getElementById('feedback-message');
+            const comboDisplay = document.getElementById('combo-display');
+
+            if (isCorrect) {
+                // RESPUESTA CORRECTA
+                selectedButton.classList.add('correct');
+                nova.classList.add('jumping');
+                
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                correctAnswers++;
+                
+                // Calcular puntos con bonus de combo
+                const basePoints = 100;
+                const comboBonus = (combo - 1) * 25;
+                const levelBonus = currentLevel * 20;
+                const pointsEarned = basePoints + comboBonus + levelBonus;
+                score += pointsEarned;
+
+                // Mostrar feedback
+                const messages = ['¡PERFECTO!', '¡EXCELENTE!', '¡GENIAL!', '¡INCREÍBLE!'];
+                feedbackMsg.textContent = messages[Math.min(combo - 1, 3)];
+                feedbackMsg.classList.add('show');
+
+                // Crear partículas de victoria
+                const rect = selectedButton.getBoundingClientRect();
+                const colors = ['#ffd700', '#ff6b35', '#00ff88', '#ff44aa'];
+                colors.forEach(color => {
+                    createParticles(rect.left + rect.width / 2, rect.top, color, 10);
+                });
+
+                // Aura de combo
+                if (combo >= 2) {
+                    nova.classList.add('combo-aura');
+                    comboDisplay.textContent = `🔥 COMBO x${combo}`;
+                    comboDisplay.classList.add('active');
+                }
+
+                setTimeout(() => {
+                    nova.classList.remove('jumping', 'combo-aura');
+                    feedbackMsg.classList.remove('show');
+                    comboDisplay.classList.remove('active');
+                    currentLevel++;
+                    updateHUD();
+                    loadQuestion();
+                }, 1200);
+
+            } else {
+                // RESPUESTA INCORRECTA
+                selectedButton.classList.add('wrong');
+                nova.classList.add('hurt');
+                combo = 0;
+                comboDisplay.classList.remove('active');
+
+                // Mostrar respuesta correcta
+                buttons.forEach(btn => {
+                    if (btn.dataset.correct === 'true') {
+                        btn.classList.add('correct');
+                    }
+                });
+
+                feedbackMsg.textContent = '¡INTENTA DE NUEVO!';
+                feedbackMsg.style.color = '#ff4444';
+                feedbackMsg.classList.add('show');
+
+                setTimeout(() => {
+                    nova.classList.remove('hurt');
+                    feedbackMsg.classList.remove('show');
+                    feedbackMsg.style.color = '#ffd700';
+                    canAnswer = true;
+                    
+                    // Reactivar botones excepto los ya respondidos
+                    buttons.forEach(btn => {
+                        if (!btn.classList.contains('correct')) {
+                            btn.classList.remove('wrong');
+                            btn.disabled = false;
+                        }
+                    });
+                }, 1500);
+            }
+
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = currentLevel;
+        }
+
+        function endGame() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-correct').textContent = correctAnswers;
+            document.getElementById('final-combo').textContent = maxCombo;
+
+            // Partículas de celebración final
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const colors = ['#ffd700', '#ff6b35', '#00ff88'];
+                    createParticles(
+                        Math.random() * window.innerWidth,
+                        window.innerHeight * 0.5,
+                        colors[i % colors.length],
+                        30
+                    );
+                }, i * 300);
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('end-screen').style.display = 'none';
+            startGame();
+        }
+
+        // ===== INICIALIZACIÓN =====
+        document.addEventListener('DOMContentLoaded', () => {
+            createStars();
+        });
+    </script>
+</body>
+</html>

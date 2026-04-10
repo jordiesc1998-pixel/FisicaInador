@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESPEJO DIMENSIONAL - Aprende Proporcionalidad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0f0f2f 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        /* ===== PARTÍCULAS DE FONDO ===== */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(100, 150, 255, 0.5);
+            border-radius: 50%;
+            animation: floatParticle 15s linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* ===== PANTALLA DE INICIO ===== */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0f0f2f 100%);
+        }
+
+        .game-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00d4ff, #a855f7, #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(168, 85, 247, 0.5)); }
+            50% { filter: brightness(1.2) drop-shadow(0 0 40px rgba(0, 212, 255, 0.8)); }
+        }
+
+        .game-subtitle {
+            font-size: 1.2rem;
+            color: #a855f7;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .mirror-icon {
+            width: 200px;
+            height: 250px;
+            margin-bottom: 30px;
+            animation: mirrorFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes mirrorFloat {
+            0%, 100% { transform: translateY(0) rotateY(0deg); }
+            25% { transform: translateY(-15px) rotateY(5deg); }
+            75% { transform: translateY(-15px) rotateY(-5deg); }
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(168, 85, 247, 0.4);
+        }
+
+        .start-btn:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 20px 50px rgba(168, 85, 247, 0.6);
+        }
+
+        .instructions {
+            color: #666;
+            font-size: 1rem;
+            margin-top: 25px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* ===== PANTALLA DE JUEGO ===== */
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* HUD */
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 26, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 50;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .hud-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #level-display {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            padding: 8px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+
+        #combo-display {
+            color: #00ff88;
+            font-size: 1.2rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        #combo-display.active {
+            opacity: 1;
+            text-shadow: 0 0 20px #00ff88;
+        }
+
+        /* Área Principal del Juego */
+        #game-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 80px);
+            padding-top: 80px;
+            gap: 20px;
+        }
+
+        /* Mundos */
+        .world-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .world-label {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #666;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .world-box {
+            width: 280px;
+            height: 350px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #real-world {
+            background: linear-gradient(180deg, #1a2a4a 0%, #0f1a2f 100%);
+            border: 3px solid #3b82f6;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 30px rgba(59, 130, 246, 0.1);
+        }
+
+        #mirror-world {
+            background: linear-gradient(180deg, #2a1a4a 0%, #1f0f2f 100%);
+            border: 3px solid #a855f7;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.3), inset 0 0 30px rgba(168, 85, 247, 0.1);
+        }
+
+        #mirror-world.revealed {
+            animation: revealPulse 0.8s ease-out;
+        }
+
+        @keyframes revealPulse {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.5); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        /* Espejo Central */
+        #mirror-center {
+            width: 80px;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .mirror-frame {
+            width: 60px;
+            height: 200px;
+            background: linear-gradient(180deg, #ffd700 0%, #ff6b35 50%, #ffd700 100%);
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: mirrorGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes mirrorGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 107, 53, 0.4); }
+        }
+
+        .mirror-glass {
+            width: 50px;
+            height: 180px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(200,200,255,0.1) 50%, rgba(255,255,255,0.3) 100%);
+            border-radius: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mirror-glass::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%);
+            animation: mirrorShine 3s ease-in-out infinite;
+        }
+
+        @keyframes mirrorShine {
+            0% { transform: translateX(-100%) translateY(-100%); }
+            100% { transform: translateX(100%) translateY(100%); }
+        }
+
+        /* Personaje - CONTENEDOR con transición */
+        .character-wrapper {
+            width: 100px;
+            height: 140px;
+            position: relative;
+        }
+
+        .character {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s ease-out;
+        }
+
+        .character.up {
+            transform: translateY(-30px);
+        }
+
+        .character.down {
+            transform: translateY(30px);
+        }
+
+        .character.flash-correct {
+            animation: flashCorrect 0.5s ease-out;
+        }
+
+        .character.flash-wrong {
+            animation: flashWrong 0.5s ease-out;
+        }
+
+        @keyframes flashCorrect {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(2) drop-shadow(0 0 20px #00ff88); }
+        }
+
+        @keyframes flashWrong {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(0.5) drop-shadow(0 0 20px #ff4444); }
+        }
+
+        /* Variables */
+        .variable-display {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .variable-name {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .variable-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        #real-world .variable-value {
+            color: #3b82f6;
+        }
+
+        #mirror-world .variable-value {
+            color: #a855f7;
+        }
+
+        .variable-value.up {
+            color: #00ff88 !important;
+        }
+
+        .variable-value.down {
+            color: #ff6b35 !important;
+        }
+
+        /* Indicador de dirección */
+        .direction-indicator {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .direction-indicator.show {
+            opacity: 1;
+        }
+
+        .direction-indicator.up {
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            animation: bounceUp 0.5s ease-out;
+        }
+
+        .direction-indicator.down {
+            background: rgba(255, 107, 53, 0.2);
+            border: 2px solid #ff6b35;
+            color: #ff6b35;
+            animation: bounceDown 0.5s ease-out;
+        }
+
+        @keyframes bounceUp {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes bounceDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        /* Escenario */
+        #scenario-area {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 30;
+        }
+
+        #scenario-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            max-width: 800px;
+            line-height: 1.4;
+            text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+
+        #scenario-hint {
+            font-size: 1rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        /* Botones de Decisión */
+        #decision-area {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            z-index: 40;
+        }
+
+        .decision-btn {
+            padding: 25px 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .decision-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        #btn-direct {
+            background: linear-gradient(135deg, #00c853 0%, #00a844 100%);
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(0, 200, 83, 0.4);
+        }
+
+        #btn-direct:hover:not(:disabled) {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 200, 83, 0.6);
+        }
+
+        #btn-inverse {
+            background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+        }
+
+        #btn-inverse:hover:not(:disabled) {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.6);
+        }
+
+        .btn-icon {
+            font-size: 2rem;
+        }
+
+        .btn-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .decision-btn.selected {
+            transform: scale(1.1);
+            animation: selectedPulse 0.5s ease-out;
+        }
+
+        @keyframes selectedPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Mensaje de Feedback */
+        #feedback-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            opacity: 0;
+            z-index: 200;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #feedback-message.show {
+            animation: feedbackPop 1s ease-out forwards;
+        }
+
+        @keyframes feedbackPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Barra de Progreso */
+        #progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #a855f7, #6366f1, #00d4ff);
+            transition: width 0.5s ease;
+        }
+
+        /* Partículas de Victoria */
+        .victory-particle {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 150;
+        }
+
+        /* Pantalla de Fin */
+        #end-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        .end-title {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+        }
+
+        .end-stats {
+            color: #fff;
+            font-size: 1.3rem;
+            margin: 10px 0;
+        }
+
+        .end-score {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(168, 85, 247, 0.5);
+        }
+
+        /* Explicación de Proporcionalidad */
+        #explanation-panel {
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.9);
+            border: 2px solid #a855f7;
+            border-radius: 15px;
+            padding: 20px 40px;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 60;
+            max-width: 600px;
+        }
+
+        #explanation-panel.show {
+            opacity: 1;
+        }
+
+        #explanation-type {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #explanation-type.direct {
+            color: #00ff88;
+        }
+
+        #explanation-type.inverse {
+            color: #ff6b35;
+        }
+
+        #explanation-formula {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <!-- Partículas de fondo -->
+    <div class="bg-particles" id="bg-particles"></div>
+
+    <!-- Pantalla de Inicio -->
+    <div id="start-screen">
+        <h1 class="game-title">ESPEJO DIMENSIONAL</h1>
+        <p class="game-subtitle">⚖️ DOMINA LAS LEYES DE LA PROPORCIONALIDAD ⚖️</p>
+        
+        <svg class="mirror-icon" viewBox="0 0 200 250">
+            <defs>
+                <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ffd700"/>
+                    <stop offset="50%" style="stop-color:#ff6b35"/>
+                    <stop offset="100%" style="stop-color:#ffd700"/>
+                </linearGradient>
+                <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgba(255,255,255,0.4)"/>
+                    <stop offset="50%" style="stop-color:rgba(200,200,255,0.2)"/>
+                    <stop offset="100%" style="stop-color:rgba(255,255,255,0.4)"/>
+                </linearGradient>
+            </defs>
+            
+            <ellipse cx="100" cy="100" rx="70" ry="90" fill="url(#frameGrad)"/>
+            <ellipse cx="100" cy="100" rx="60" ry="80" fill="url(#glassGrad)"/>
+            <ellipse cx="80" cy="70" rx="20" ry="30" fill="rgba(255,255,255,0.3)" transform="rotate(-20 80 70)"/>
+            
+            <g transform="translate(30, 140)">
+                <ellipse cx="25" cy="50" rx="18" ry="15" fill="#2a4a6a"/>
+                <circle cx="25" cy="25" r="20" fill="#ffd5b5"/>
+                <ellipse cx="25" cy="15" rx="22" ry="12" fill="#ff6b35"/>
+                <path d="M5 18 Q0 8 15 12 Q10 2 30 8 Q30 -2 40 8 Q50 2 50 18" fill="#ff6b35"/>
+                <circle cx="18" cy="27" r="8" fill="none" stroke="#333" stroke-width="2"/>
+                <circle cx="32" cy="27" r="8" fill="none" stroke="#333" stroke-width="2"/>
+                <circle cx="18" cy="27" r="6" fill="rgba(100,200,255,0.2)"/>
+                <circle cx="32" cy="27" r="6" fill="rgba(100,200,255,0.2)"/>
+                <circle cx="18" cy="27" r="3" fill="#333"/>
+                <circle cx="32" cy="27" r="3" fill="#333"/>
+            </g>
+            
+            <g transform="translate(120, 140)">
+                <ellipse cx="25" cy="50" rx="18" ry="15" fill="#3a2a5a"/>
+                <circle cx="25" cy="25" r="20" fill="#e5c5f5"/>
+                <ellipse cx="25" cy="15" rx="22" ry="12" fill="#a855f7"/>
+                <path d="M5 18 Q0 8 15 12 Q10 2 30 8 Q30 -2 40 8 Q50 2 50 18" fill="#a855f7"/>
+                <circle cx="18" cy="27" r="8" fill="none" stroke="#a855f7" stroke-width="2"/>
+                <circle cx="32" cy="27" r="8" fill="none" stroke="#a855f7" stroke-width="2"/>
+                <circle cx="18" cy="27" r="6" fill="rgba(168,85,247,0.3)"/>
+                <circle cx="32" cy="27" r="6" fill="rgba(168,85,247,0.3)"/>
+                <circle cx="18" cy="27" r="3" fill="#333"/>
+                <circle cx="32" cy="27" r="3" fill="#333"/>
+            </g>
+            
+            <text x="100" y="240" text-anchor="middle" fill="#ffd700" font-size="20" font-weight="bold">∝</text>
+        </svg>
+
+        <button class="start-btn" onclick="startGame()">🔮 ¡ENTRAR AL ESPEJO!</button>
+        <p class="instructions">
+            Descubre si la relación es <strong style="color:#00ff88">DIRECTA</strong> (↑↑) o <strong style="color:#ff6b35">INVERSA</strong> (↑↓)<br>
+            ¡5 desafíos te esperan!
+        </p>
+    </div>
+
+    <!-- Pantalla de Juego -->
+    <div id="game-screen">
+        <div id="hud">
+            <div class="hud-item">
+                <span class="hud-label">PUNTOS:</span>
+                <span class="hud-value" id="score">0</span>
+            </div>
+            <div id="level-display">NIVEL <span id="level">1</span>/5</div>
+            <div class="hud-item">
+                <span id="combo-display">🔥 COMBO x1</span>
+            </div>
+        </div>
+
+        <div id="scenario-area">
+            <div id="scenario-text">Si A aumenta, ¿qué pasa con B?</div>
+            <div id="scenario-hint">Analiza la relación entre las variables</div>
+        </div>
+
+        <div id="game-area">
+            <!-- Mundo Real -->
+            <div class="world-container">
+                <div class="world-label">Mundo Real</div>
+                <div class="world-box" id="real-world">
+                    <div class="character-wrapper">
+                        <svg class="character" id="alex-real" viewBox="0 0 100 140">
+                            <path d="M25 90 Q50 110 75 90 L80 130 Q50 140 20 130 Z" fill="#3b82f6" opacity="0.7"/>
+                            <ellipse cx="50" cy="115" rx="25" ry="18" fill="#2a4a6a"/>
+                            <circle cx="50" cy="50" r="30" fill="#ffd5b5"/>
+                            <ellipse cx="50" cy="35" rx="32" ry="18" fill="#ff6b35"/>
+                            <path d="M20 40 Q15 25 30 30 Q25 18 45 24 Q40 14 55 20 Q55 10 65 20 Q70 15 75 30 Q85 25 80 40" fill="#ff6b35"/>
+                            <circle cx="35" cy="30" r="3" fill="#ff8c5a"/>
+                            <circle cx="55" cy="25" r="2" fill="#ff8c5a"/>
+                            <circle cx="38" cy="52" r="10" fill="none" stroke="#333" stroke-width="2"/>
+                            <circle cx="62" cy="52" r="10" fill="none" stroke="#333" stroke-width="2"/>
+                            <line x1="48" y1="52" x2="52" y2="52" stroke="#333" stroke-width="2"/>
+                            <circle cx="38" cy="52" r="8" fill="rgba(100,200,255,0.2)"/>
+                            <circle cx="62" cy="52" r="8" fill="rgba(100,200,255,0.2)"/>
+                            <circle cx="38" cy="52" r="3" fill="#333"/>
+                            <circle cx="62" cy="52" r="3" fill="#333"/>
+                            <circle cx="39" cy="51" r="1" fill="#fff"/>
+                            <circle cx="63" cy="51" r="1" fill="#fff"/>
+                            <path d="M40 70 Q50 78 60 70" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="variable-display">
+                        <div class="variable-name" id="var-a-name">Variable A</div>
+                        <div class="variable-value" id="var-a-value">↑ AUMENTA</div>
+                        <div class="direction-indicator" id="direction-real">↑</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Espejo Central -->
+            <div id="mirror-center">
+                <div class="mirror-frame">
+                    <div class="mirror-glass"></div>
+                </div>
+            </div>
+
+            <!-- Mundo del Espejo -->
+            <div class="world-container">
+                <div class="world-label">Espejo Dimensional</div>
+                <div class="world-box" id="mirror-world">
+                    <div class="character-wrapper">
+                        <svg class="character" id="alex-mirror" viewBox="0 0 100 140">
+                            <path d="M25 90 Q50 110 75 90 L80 130 Q50 140 20 130 Z" fill="#a855f7" opacity="0.7"/>
+                            <ellipse cx="50" cy="115" rx="25" ry="18" fill="#3a2a5a"/>
+                            <circle cx="50" cy="50" r="30" fill="#e5d5f5"/>
+                            <ellipse cx="50" cy="35" rx="32" ry="18" fill="#a855f7"/>
+                            <path d="M20 40 Q15 25 30 30 Q25 18 45 24 Q40 14 55 20 Q55 10 65 20 Q70 15 75 30 Q85 25 80 40" fill="#a855f7"/>
+                            <circle cx="35" cy="30" r="3" fill="#c084fc"/>
+                            <circle cx="55" cy="25" r="2" fill="#c084fc"/>
+                            <circle cx="38" cy="52" r="10" fill="none" stroke="#c084fc" stroke-width="2"/>
+                            <circle cx="62" cy="52" r="10" fill="none" stroke="#c084fc" stroke-width="2"/>
+                            <line x1="48" y1="52" x2="52" y2="52" stroke="#c084fc" stroke-width="2"/>
+                            <circle cx="38" cy="52" r="8" fill="rgba(168,85,247,0.2)"/>
+                            <circle cx="62" cy="52" r="8" fill="rgba(168,85,247,0.2)"/>
+                            <circle cx="38" cy="52" r="3" fill="#333"/>
+                            <circle cx="62" cy="52" r="3" fill="#333"/>
+                            <circle cx="39" cy="51" r="1" fill="#fff"/>
+                            <circle cx="63" cy="51" r="1" fill="#fff"/>
+                            <path d="M40 70 Q50 78 60 70" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="variable-display">
+                        <div class="variable-name" id="var-b-name">Variable B</div>
+                        <div class="variable-value" id="var-b-value">???</div>
+                        <div class="direction-indicator" id="direction-mirror">?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="explanation-panel">
+            <div id="explanation-type">PROPORCIONALIDAD DIRECTA</div>
+            <div id="explanation-text">Cuando A aumenta, B también aumenta</div>
+            <div id="explanation-formula">y = k × x (k = constante)</div>
+        </div>
+
+        <div id="decision-area">
+            <button class="decision-btn" id="btn-direct" onclick="makeDecision('direct')">
+                <span class="btn-icon">⬆️⬆️</span>
+                <span>DIRECTA</span>
+                <span class="btn-label">Ambas suben juntas</span>
+            </button>
+            <button class="decision-btn" id="btn-inverse" onclick="makeDecision('inverse')">
+                <span class="btn-icon">⬆️⬇️</span>
+                <span>INVERSA</span>
+                <span class="btn-label">Una sube, otra baja</span>
+            </button>
+        </div>
+
+        <div id="progress-bar">
+            <div id="progress-fill"></div>
+        </div>
+
+        <div id="feedback-message">¡PERFECTO!</div>
+    </div>
+
+    <!-- Pantalla de Fin -->
+    <div id="end-screen">
+        <h1 class="end-title">🏆 ¡ESPEJO DOMINADO! 🏆</h1>
+        <p class="end-stats">Niveles completados: 5/5</p>
+        <p class="end-stats">Respuestas correctas: <span id="final-correct">0</span></p>
+        <p class="end-stats">Mejor combo: <span id="final-combo">0</span>x</p>
+        <p class="end-stats">Directas identificadas: <span id="final-direct">0</span></p>
+        <p class="end-stats">Inversas identificadas: <span id="final-inverse">0</span></p>
+        <p class="end-score">PUNTUACIÓN: <span id="final-score">0</span></p>
+        <button class="restart-btn" onclick="restartGame()">🔄 NUEVO DESAFÍO</button>
+    </div>
+
+    <script>
+        // ===== BASE DE DATOS DE ESCENARIOS =====
+        const scenarioDatabase = [
+            { text: "Más velocidad de conducción → Tiempo de viaje", varA: "Velocidad", varB: "Tiempo", type: "inverse", explanation: "Si aumentas la velocidad, llegas más rápido (menos tiempo)" },
+            { text: "Más trabajadores en una obra → Días para terminar", varA: "Trabajadores", varB: "Días", type: "inverse", explanation: "Más trabajadores = menos días necesarios" },
+            { text: "Más horas de estudio → Calificación del examen", varA: "Horas de estudio", varB: "Calificación", type: "direct", explanation: "Más estudio = mejor nota (generalmente)" },
+            { text: "Más precio de un producto → Demanda del mercado", varA: "Precio", varB: "Demanda", type: "inverse", explanation: "Si el precio sube, la gente compra menos" },
+            { text: "Más ingredientes en la receta → Cantidad de porciones", varA: "Ingredientes", varB: "Porciones", type: "direct", explanation: "Más ingredientes = más comida preparada" },
+            { text: "Más cilindrada del motor → Consumo de gasolina", varA: "Cilindrada", varB: "Consumo", type: "direct", explanation: "Motor más grande = más gasolina consume" },
+            { text: "Más presión sobre un gas → Volumen del gas (Boyle)", varA: "Presión", varB: "Volumen", type: "inverse", explanation: "A mayor presión, el gas se comprime (menos volumen)" },
+            { text: "Más distancia del foco → Intensidad luminosa", varA: "Distancia", varB: "Intensidad", type: "inverse", explanation: "Más lejos de la luz = menos iluminación" },
+            { text: "Más ancho de un tubo → Flujo de agua", varA: "Ancho del tubo", varB: "Flujo", type: "direct", explanation: "Tubo más ancho = pasa más agua" },
+            { text: "Más velocidad de internet → Tiempo de descarga", varA: "Velocidad internet", varB: "Tiempo descarga", type: "inverse", explanation: "Internet más rápido = descarga más rápida" },
+            { text: "Más fuerza aplicada → Aceleración del objeto (F=ma)", varA: "Fuerza", varB: "Aceleración", type: "direct", explanation: "Mayor fuerza = mayor aceleración (masa constante)" },
+            { text: "Más masa de un objeto → Aceleración (fuerza constante)", varA: "Masa", varB: "Aceleración", type: "inverse", explanation: "Objeto más pesado = más difícil de acelerar" },
+            { text: "Más inversión inicial → Intereses ganados", varA: "Inversión", varB: "Intereses", type: "direct", explanation: "Más dinero invertido = más intereses generados" },
+            { text: "Más horas de luz solar → Producción solar", varA: "Horas de sol", varB: "Energía producida", type: "direct", explanation: "Más sol = más electricidad de paneles" },
+            { text: "Más cuotas de pago → Valor de cada cuota", varA: "Número de cuotas", varB: "Valor por cuota", type: "inverse", explanation: "Más cuotas = cada una es más pequeña" }
+        ];
+
+        // ===== VARIABLES DE ESTADO =====
+        let currentLevel = 1;
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let correctAnswers = 0;
+        let directCount = 0;
+        let inverseCount = 0;
+        let currentScenarios = [];
+        let currentScenario = null;
+        let canAnswer = true;
+
+        // ===== FUNCIONES DE UTILIDAD =====
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function createBackgroundParticles() {
+            const container = document.getElementById('bg-particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'bg-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function createVictoryParticles(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'victory-particle';
+                const size = Math.random() * 12 + 6;
+                const angle = (Math.PI * 2 * i) / count;
+                const velocity = Math.random() * 150 + 100;
+                
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.background = color;
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.boxShadow = `0 0 ${size}px ${color}`;
+                
+                document.body.appendChild(particle);
+                
+                const startTime = Date.now();
+                const animateParticle = () => {
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    if (elapsed < 1) {
+                        const dx = Math.cos(angle) * velocity * elapsed;
+                        const dy = Math.sin(angle) * velocity * elapsed - 200 * elapsed * elapsed / 2;
+                        particle.style.transform = `translate(${dx}px, ${dy}px)`;
+                        particle.style.opacity = 1 - elapsed;
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        particle.remove();
+                    }
+                };
+                requestAnimationFrame(animateParticle);
+            }
+        }
+
+        // ===== FUNCIÓN PARA RESETEAR PERSONAJES =====
+        function resetCharacters() {
+            const alexReal = document.getElementById('alex-real');
+            const alexMirror = document.getElementById('alex-mirror');
+            
+            // Quitar TODAS las clases
+            alexReal.classList.remove('up', 'down', 'flash-correct', 'flash-wrong');
+            alexMirror.classList.remove('up', 'down', 'flash-correct', 'flash-wrong');
+        }
+
+        // ===== FUNCIONES DEL JUEGO =====
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            currentLevel = 1;
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            correctAnswers = 0;
+            directCount = 0;
+            inverseCount = 0;
+            
+            currentScenarios = shuffleArray(scenarioDatabase).slice(0, 5);
+            
+            updateHUD();
+            loadScenario();
+        }
+
+        function loadScenario() {
+            if (currentLevel > 5) {
+                endGame();
+                return;
+            }
+
+            currentScenario = currentScenarios[currentLevel - 1];
+            canAnswer = true;
+
+            // RESETEAR personajes a posición central
+            resetCharacters();
+
+            // Reset de UI
+            document.getElementById('mirror-world').classList.remove('revealed');
+            document.getElementById('explanation-panel').classList.remove('show');
+            document.getElementById('var-b-value').textContent = '???';
+            document.getElementById('var-b-value').className = 'variable-value';
+            document.getElementById('direction-real').classList.remove('show', 'up', 'down');
+            document.getElementById('direction-mirror').classList.remove('show', 'up', 'down');
+            document.getElementById('direction-mirror').textContent = '?';
+            
+            document.getElementById('btn-direct').disabled = false;
+            document.getElementById('btn-inverse').disabled = false;
+            document.getElementById('btn-direct').classList.remove('selected');
+            document.getElementById('btn-inverse').classList.remove('selected');
+
+            document.getElementById('scenario-text').textContent = currentScenario.text;
+            document.getElementById('var-a-name').textContent = currentScenario.varA;
+            document.getElementById('var-b-name').textContent = currentScenario.varB;
+
+            document.getElementById('var-a-value').textContent = '↑ AUMENTA';
+            document.getElementById('var-a-value').className = 'variable-value up';
+            document.getElementById('direction-real').textContent = '↑';
+            document.getElementById('direction-real').classList.add('show', 'up');
+
+            // Animar personaje real hacia ARRIBA después de un breve delay
+            setTimeout(() => {
+                document.getElementById('alex-real').classList.add('up');
+            }, 300);
+
+            document.getElementById('progress-fill').style.width = ((currentLevel - 1) * 20) + '%';
+        }
+
+        function makeDecision(decision) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const isCorrect = decision === currentScenario.type;
+            const btnDirect = document.getElementById('btn-direct');
+            const btnInverse = document.getElementById('btn-inverse');
+            const feedbackMsg = document.getElementById('feedback-message');
+            const comboDisplay = document.getElementById('combo-display');
+
+            if (decision === 'direct') {
+                btnDirect.classList.add('selected');
+            } else {
+                btnInverse.classList.add('selected');
+            }
+
+            btnDirect.disabled = true;
+            btnInverse.disabled = true;
+
+            if (isCorrect) {
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                correctAnswers++;
+                if (currentScenario.type === 'direct') directCount++;
+                else inverseCount++;
+
+                const basePoints = 100;
+                const comboBonus = (combo - 1) * 30;
+                const levelBonus = currentLevel * 25;
+                score += basePoints + comboBonus + levelBonus;
+
+                revealMirror();
+                
+                const messages = ['¡PERFECTO!', '¡EXCELENTE!', '¡GENIAL!', '¡INCREÍBLE!', '¡MAESTRO!'];
+                feedbackMsg.textContent = messages[Math.min(combo - 1, 4)];
+                feedbackMsg.style.color = '#00ff88';
+                feedbackMsg.style.textShadow = '0 0 30px #00ff88';
+                feedbackMsg.classList.add('show');
+
+                const mirrorBox = document.getElementById('mirror-world');
+                const rect = mirrorBox.getBoundingClientRect();
+                createVictoryParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#00ff88', 20);
+                createVictoryParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#ffd700', 15);
+
+                if (combo >= 2) {
+                    comboDisplay.textContent = `🔥 COMBO x${combo}`;
+                    comboDisplay.classList.add('active');
+                }
+
+                showExplanation();
+
+                setTimeout(() => {
+                    feedbackMsg.classList.remove('show');
+                    comboDisplay.classList.remove('active');
+                    currentLevel++;
+                    updateHUD();
+                    loadScenario();
+                }, 2500);
+
+            } else {
+                combo = 0;
+                comboDisplay.classList.remove('active');
+
+                revealMirror();
+
+                feedbackMsg.textContent = '¡UPS! Era ' + (currentScenario.type === 'direct' ? 'DIRECTA' : 'INVERSA');
+                feedbackMsg.style.color = '#ff6b35';
+                feedbackMsg.style.textShadow = '0 0 30px #ff6b35';
+                feedbackMsg.classList.add('show');
+
+                document.getElementById('alex-mirror').classList.add('flash-wrong');
+
+                showExplanation();
+
+                setTimeout(() => {
+                    feedbackMsg.classList.remove('show');
+                    currentLevel++;
+                    updateHUD();
+                    loadScenario();
+                }, 3000);
+            }
+
+            updateHUD();
+        }
+
+        function revealMirror() {
+            const mirrorWorld = document.getElementById('mirror-world');
+            const alexMirror = document.getElementById('alex-mirror');
+            const varBValue = document.getElementById('var-b-value');
+            const directionMirror = document.getElementById('direction-mirror');
+
+            mirrorWorld.classList.add('revealed');
+            alexMirror.classList.add('flash-correct');
+
+            if (currentScenario.type === 'direct') {
+                alexMirror.classList.add('up');
+                varBValue.textContent = '↑ AUMENTA';
+                varBValue.classList.add('up');
+                directionMirror.textContent = '↑';
+                directionMirror.classList.add('show', 'up');
+            } else {
+                alexMirror.classList.add('down');
+                varBValue.textContent = '↓ DISMINUYE';
+                varBValue.classList.add('down');
+                directionMirror.textContent = '↓';
+                directionMirror.classList.add('show', 'down');
+            }
+        }
+
+        function showExplanation() {
+            const panel = document.getElementById('explanation-panel');
+            const typeEl = document.getElementById('explanation-type');
+            const textEl = document.getElementById('explanation-text');
+            const formulaEl = document.getElementById('explanation-formula');
+
+            if (currentScenario.type === 'direct') {
+                typeEl.textContent = '📐 PROPORCIONALIDAD DIRECTA';
+                typeEl.className = 'direct';
+                formulaEl.textContent = 'y = k × x  →  y/x = k (constante)';
+            } else {
+                typeEl.textContent = '🔄 PROPORCIONALIDAD INVERSA';
+                typeEl.className = 'inverse';
+                formulaEl.textContent = 'y = k/x  →  x × y = k (constante)';
+            }
+
+            textEl.textContent = currentScenario.explanation;
+            panel.classList.add('show');
+        }
+
+        function updateHUD() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = currentLevel;
+        }
+
+        function endGame() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-correct').textContent = correctAnswers;
+            document.getElementById('final-combo').textContent = maxCombo;
+            document.getElementById('final-direct').textContent = directCount;
+            document.getElementById('final-inverse').textContent = inverseCount;
+
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    createVictoryParticles(
+                        Math.random() * window.innerWidth,
+                        Math.random() * window.innerHeight * 0.5 + 200,
+                        ['#a855f7', '#6366f1', '#00d4ff', '#ffd700'][i % 4],
+                        15
+                    );
+                }, i * 200);
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('end-screen').style.display = 'none';
+            startGame();
+        }
+
+        // ===== INICIALIZACIÓN =====
+        document.addEventListener('DOMContentLoaded', () => {
+            createBackgroundParticles();
+        });
+    </script>
+</body>
+</html>
