@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Info, Volume2, VolumeX } from 'lucide-react'
+import { Sparkles, Info, Volume2, VolumeX, Settings } from 'lucide-react'
+import Link from 'next/link'
 import Universe from '@/components/Universe'
 import Planet from '@/components/Planet'
 import Sun from '@/components/Sun'
@@ -67,6 +68,12 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/admin"
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-amber-500/20 hover:border-amber-500/50 transition-colors group"
+            >
+              <Settings className="w-5 h-5 text-white/70 group-hover:text-amber-400 transition-colors" />
+            </Link>
             <motion.button
               onClick={() => setShowInfo(!showInfo)}
               className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
