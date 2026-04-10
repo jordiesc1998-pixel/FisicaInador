@@ -3,29 +3,40 @@
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
-  ArrowLeft, BookOpen, Image, Calculator, Gamepad2, 
-  Video, Bot, Lock, Sparkles, ExternalLink
+  ArrowLeft, BookOpen, Image as ImageIcon, Calculator, Gamepad2, 
+  Video, Bot, Lock, Sparkles, ExternalLink, MessageCircle
 } from 'lucide-react'
 import { getPlanetById } from '@/data/planets'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
+import AIAssistant from '@/components/AIAssistant'
 
 const modules = [
   { id: 'teoria', name: 'Teoría Resumida', icon: BookOpen, available: true },
-  { id: 'imagen', name: 'Imagen del Tema', icon: Image, available: false },
+  { id: 'imagen', name: 'Imagen del Tema', icon: ImageIcon, available: false },
   { id: 'ejercicios', name: 'Ejercicios IA', icon: Calculator, available: false },
   { id: 'juego', name: 'Juego', icon: Gamepad2, available: false },
   { id: 'video', name: 'Video', icon: Video, available: false },
-  { id: 'asistente', name: 'Asistente IA', icon: Bot, available: false },
+  { id: 'asistente', name: 'Asistente IA', icon: Bot, available: true },
 ]
 
 export default function PlanetPage() {
   const params = useParams()
   const router = useRouter()
   const planet = getPlanetById(params.id as string)
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [activeModule, setActiveModule] = useState<string>('teoria')
 
   const handleGoBack = useCallback(() => {
     router.push('/')
   }, [router])
+
+  const handleModuleClick = (moduleId: string) => {
+    if (moduleId === 'asistente') {
+      setAssistantOpen(true)
+    } else {
+      setActiveModule(moduleId)
+    }
+  }
 
   if (!planet) {
     return (
@@ -100,7 +111,16 @@ export default function PlanetPage() {
             </div>
           </div>
 
-          <div className="w-24" /> {/* Spacer for centering */}
+          {/* AI Assistant Button */}
+          <motion.button
+            onClick={() => setAssistantOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg text-white/70 hover:text-white hover:border-purple-500/50 transition-all"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Bot className="w-4 h-4" />
+            <span className="hidden md:inline text-sm">Asistente</span>
+          </motion.button>
         </div>
       </motion.header>
 
@@ -134,13 +154,19 @@ export default function PlanetPage() {
             >
               {module.available ? (
                 <motion.button
-                  className={`w-full p-4 rounded-xl bg-gradient-to-br ${planet.gradientFrom} ${planet.gradientTo} bg-opacity-20 border border-white/20 hover:border-white/40 transition-all group relative overflow-hidden`}
+                  onClick={() => handleModuleClick(module.id)}
+                  className={`w-full p-4 rounded-xl bg-gradient-to-br ${planet.gradientFrom} ${planet.gradientTo} bg-opacity-20 border border-white/20 hover:border-white/40 transition-all group relative overflow-hidden ${
+                    activeModule === module.id ? 'ring-2 ring-white/50' : ''
+                  }`}
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <module.icon className="w-8 h-8 mx-auto mb-2 text-white" />
                   <span className="text-sm font-medium text-white">{module.name}</span>
+                  {module.id === 'asistente' && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  )}
                 </motion.button>
               ) : (
                 <div className="w-full p-4 rounded-xl bg-white/5 border border-white/10 opacity-60 cursor-not-allowed relative">
@@ -246,6 +272,35 @@ export default function PlanetPage() {
                 </ul>
               </div>
             )}
+
+            {/* Ask AI Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 backdrop-blur-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">¿Tienes dudas?</h3>
+                    <p className="text-white/60 text-sm">Pregunta al asistente IA sobre {planet.theme}</p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={() => setAssistantOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Preguntar
+                </motion.button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -271,6 +326,14 @@ export default function PlanetPage() {
           </p>
         </div>
       </footer>
+
+      {/* AI Assistant */}
+      <AIAssistant
+        topic={planet.theme}
+        context={`Estudiante en ${planet.name}. Tema: ${planet.theme}. Descripción: ${planet.description}`}
+        isOpen={assistantOpen}
+        onToggle={() => setAssistantOpen(!assistantOpen)}
+      />
     </div>
   )
 }

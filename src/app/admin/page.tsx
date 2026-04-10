@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { 
   ArrowLeft, Image as ImageIcon, Video, Gamepad2, Save, Plus, Trash2, 
-  Edit, Upload, ExternalLink, Check, X, Settings, Users
+  Edit, Upload, ExternalLink, Check, X, Settings, Code, Eye, Copy
 } from 'lucide-react'
 import { planets } from '@/data/planets'
 
@@ -19,9 +19,10 @@ interface VideoLink {
 interface GameConfig {
   id: string;
   title: string;
-  type: 'quiz' | 'simulation' | 'puzzle' | 'match';
+  type: 'embedded' | 'quiz' | 'simulation' | 'puzzle' | 'match';
   planetId: string;
   isActive: boolean;
+  embeddedCode: string;
 }
 
 interface ImageConfig {
@@ -37,8 +38,7 @@ const initialVideos: VideoLink[] = [
 ]
 
 const initialGames: GameConfig[] = [
-  { id: '1', title: 'Calculadora de Resortes', type: 'simulation', planetId: 'hooke', isActive: true },
-  { id: '2', title: 'Arma Circuitos', type: 'puzzle', planetId: 'circuitos', isActive: false },
+  { id: '1', title: 'Juego de Resortes', type: 'embedded', planetId: 'hooke', isActive: true, embeddedCode: '' },
 ]
 
 export default function AdminPage() {
@@ -51,12 +51,17 @@ export default function AdminPage() {
   const [newVideoTitle, setNewVideoTitle] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  
+  // Game editor state
+  const [editingGame, setEditingGame] = useState<string | null>(null)
+  const [gameCode, setGameCode] = useState('')
+  const [gameTitle, setGameTitle] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
 
   const activePlanets = planets.filter(p => p.isActive)
 
   const handleSave = async () => {
     setSaving(true)
-    // Simular guardado
     await new Promise(resolve => setTimeout(resolve, 1000))
     setSaving(false)
     setSaved(true)
@@ -80,12 +85,44 @@ export default function AdminPage() {
     setVideos(videos.filter(v => v.id !== id))
   }
 
+  const addGame = () => {
+    const newGame: GameConfig = {
+      id: Date.now().toString(),
+      title: 'Nuevo Juego',
+      type: 'embedded',
+      planetId: selectedPlanet,
+      isActive: false,
+      embeddedCode: ''
+    }
+    setGames([...games, newGame])
+    setEditingGame(newGame.id)
+    setGameTitle(newGame.title)
+    setGameCode('')
+  }
+
+  const saveGameCode = () => {
+    if (!editingGame) return
+    setGames(games.map(g => 
+      g.id === editingGame 
+        ? { ...g, title: gameTitle, embeddedCode: gameCode }
+        : g
+    ))
+    setEditingGame(null)
+    setGameCode('')
+    setGameTitle('')
+    setShowPreview(false)
+  }
+
   const toggleGame = (id: string) => {
     setGames(games.map(g => g.id === id ? { ...g, isActive: !g.isActive } : g))
   }
 
   const deleteGame = (id: string) => {
     setGames(games.filter(g => g.id !== id))
+    if (editingGame === id) {
+      setEditingGame(null)
+      setGameCode('')
+    }
   }
 
   const getVideosForPlanet = () => videos.filter(v => v.planetId === selectedPlanet)
@@ -95,7 +132,6 @@ export default function AdminPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // En producción, subir a storage y obtener URL
       const newImage: ImageConfig = {
         planetId: selectedPlanet,
         url: URL.createObjectURL(file),
@@ -106,6 +142,10 @@ export default function AdminPage() {
         return [...filtered, newImage]
       })
     }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
   }
 
   return (
@@ -369,77 +409,199 @@ export default function AdminPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-gray-800/50 rounded-xl border border-white/10 p-6"
+                  className="space-y-4"
                 >
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Gamepad2 className="w-5 h-5 text-amber-400" />
-                    Configuración de Juegos
-                  </h3>
-
-                  {/* Add new game */}
-                  <button className="w-full mb-6 p-4 border-2 border-dashed border-white/20 rounded-xl text-white/40 hover:border-amber-500/50 hover:text-amber-400 transition-colors flex items-center justify-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Agregar nuevo juego
-                  </button>
-
-                  {/* Game list */}
-                  <div className="space-y-3">
-                    {getGamesForPlanet().length === 0 ? (
-                      <div className="text-center py-8 text-white/40">
-                        No hay juegos configurados para este planeta
+                  {/* Game Editor */}
+                  {editingGame && (
+                    <div className="bg-gray-800/50 rounded-xl border border-amber-500/30 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                          <Code className="w-5 h-5 text-amber-400" />
+                          Editor de Juego
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setShowPreview(!showPreview)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              showPreview 
+                                ? 'bg-amber-500 text-white' 
+                                : 'bg-gray-700 text-white/70 hover:bg-gray-600'
+                            }`}
+                          >
+                            <Eye className="w-4 h-4" />
+                            {showPreview ? 'Ocultar Preview' : 'Ver Preview'}
+                          </button>
+                          <button
+                            onClick={saveGameCode}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600"
+                          >
+                            <Check className="w-4 h-4" />
+                            Guardar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingGame(null)
+                              setGameCode('')
+                              setShowPreview(false)
+                            }}
+                            className="p-1.5 text-white/40 hover:text-white"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
-                    ) : (
-                      getGamesForPlanet().map(game => (
-                        <div 
-                          key={game.id}
-                          className="flex items-center gap-4 p-4 bg-gray-900/50 rounded-xl border border-white/5"
-                        >
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                            <Gamepad2 className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-white font-medium">{game.title}</h4>
-                            <span className="text-xs text-white/40 uppercase">{game.type}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => toggleGame(game.id)}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                                game.isActive 
-                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                                  : 'bg-gray-700 text-white/40 border border-white/10'
-                              }`}
-                            >
-                              {game.isActive ? 'Activo' : 'Inactivo'}
-                            </button>
-                            <button className="p-2 text-white/40 hover:text-white transition-colors">
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => deleteGame(game.id)}
-                              className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+
+                      <input
+                        type="text"
+                        placeholder="Título del juego"
+                        value={gameTitle}
+                        onChange={e => setGameTitle(e.target.value)}
+                        className="w-full px-4 py-2 mb-4 bg-gray-900 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-amber-500 focus:outline-none"
+                      />
+
+                      {/* Code Editor */}
+                      <div className="relative">
+                        <div className="absolute top-2 right-2 z-10">
+                          <button
+                            onClick={() => copyToClipboard(gameCode)}
+                            className="p-1.5 bg-gray-700 rounded text-white/60 hover:text-white text-xs flex items-center gap-1"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Copiar
+                          </button>
+                        </div>
+                        <textarea
+                          value={gameCode}
+                          onChange={e => setGameCode(e.target.value)}
+                          placeholder={`<!-- Pega aquí tu código HTML/JS del juego -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Estilos del juego */
+  </style>
+</head>
+<body>
+  <!-- Contenido del juego -->
+  <script>
+    // Lógica del juego
+  </script>
+</body>
+</html>`}
+                          className="w-full h-64 px-4 py-3 bg-gray-900 border border-white/10 rounded-lg text-white font-mono text-sm placeholder:text-white/20 focus:border-amber-500 focus:outline-none resize-none"
+                        />
+                      </div>
+
+                      {/* Preview */}
+                      {showPreview && gameCode && (
+                        <div className="mt-4">
+                          <p className="text-sm text-white/60 mb-2">Vista previa:</p>
+                          <div className="bg-white rounded-lg overflow-hidden">
+                            <iframe
+                              srcDoc={gameCode}
+                              className="w-full h-80 border-0"
+                              title="Game Preview"
+                              sandbox="allow-scripts"
+                            />
                           </div>
                         </div>
-                      ))
-                    )}
-                  </div>
+                      )}
 
-                  {/* Game Types Info */}
-                  <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      { type: 'quiz', label: 'Quiz', desc: 'Preguntas de opción múltiple' },
-                      { type: 'simulation', label: 'Simulación', desc: 'Experimentos virtuales' },
-                      { type: 'puzzle', label: 'Puzzle', desc: 'Ordenar o armar' },
-                      { type: 'match', label: 'Match', desc: 'Relacionar conceptos' },
-                    ].map(g => (
-                      <div key={g.type} className="bg-gray-900/50 rounded-xl p-3 text-center">
-                        <h5 className="text-white font-medium text-sm">{g.label}</h5>
-                        <p className="text-xs text-white/40">{g.desc}</p>
+                      {/* Instructions */}
+                      <div className="mt-4 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                        <h4 className="text-sm font-semibold text-blue-400 mb-2">📋 Instrucciones</h4>
+                        <ul className="text-xs text-white/60 space-y-1">
+                          <li>• Pega el código HTML completo del juego generado aquí</li>
+                          <li>• El juego se mostrará embebido en un iframe</li>
+                          <li>• Asegúrate de incluir todos los estilos y scripts necesarios</li>
+                          <li>• Usa la vista previa para verificar que funciona correctamente</li>
+                        </ul>
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  {/* Game List */}
+                  <div className="bg-gray-800/50 rounded-xl border border-white/10 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Gamepad2 className="w-5 h-5 text-amber-400" />
+                        Juegos Configurados
+                      </h3>
+                      <button
+                        onClick={addGame}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Nuevo Juego
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {getGamesForPlanet().length === 0 ? (
+                        <div className="text-center py-8 text-white/40">
+                          No hay juegos configurados para este planeta.
+                          <br />
+                          <span className="text-xs">Haz clic en "Nuevo Juego" para agregar uno.</span>
+                        </div>
+                      ) : (
+                        getGamesForPlanet().map(game => (
+                          <div 
+                            key={game.id}
+                            className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                              editingGame === game.id 
+                                ? 'bg-amber-500/10 border-amber-500/30' 
+                                : 'bg-gray-900/50 border-white/5'
+                            }`}
+                          >
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                              <Gamepad2 className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-white font-medium">{game.title}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs px-2 py-0.5 bg-gray-700 rounded text-white/60">
+                                  {game.type}
+                                </span>
+                                {game.embeddedCode && (
+                                  <span className="text-xs text-green-400 flex items-center gap-1">
+                                    <Check className="w-3 h-3" />
+                                    Código cargado
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => toggleGame(game.id)}
+                                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                                  game.isActive 
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                    : 'bg-gray-700 text-white/40 border border-white/10'
+                                }`}
+                              >
+                                {game.isActive ? 'Activo' : 'Inactivo'}
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setEditingGame(game.id)
+                                  setGameTitle(game.title)
+                                  setGameCode(game.embeddedCode)
+                                }}
+                                className="p-2 text-white/40 hover:text-amber-400 transition-colors"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => deleteGame(game.id)}
+                                className="p-2 text-white/40 hover:text-red-400 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
