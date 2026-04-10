@@ -7,13 +7,15 @@ import {
   Video, Bot, Lock, Sparkles, ExternalLink, MessageCircle
 } from 'lucide-react'
 import { getPlanetById } from '@/data/planets'
+import { getExercisesByPlanet } from '@/data/exercises'
 import { useCallback, useState } from 'react'
 import AIAssistant from '@/components/AIAssistant'
+import ExercisePlayer from '@/components/ExercisePlayer'
 
 const modules = [
   { id: 'teoria', name: 'Teoría Resumida', icon: BookOpen, available: true },
   { id: 'imagen', name: 'Imagen del Tema', icon: ImageIcon, available: false },
-  { id: 'ejercicios', name: 'Ejercicios IA', icon: Calculator, available: false },
+  { id: 'ejercicios', name: 'Ejercicios', icon: Calculator, available: true },
   { id: 'juego', name: 'Juego', icon: Gamepad2, available: false },
   { id: 'video', name: 'Video', icon: Video, available: false },
   { id: 'asistente', name: 'Asistente IA', icon: Bot, available: true },
@@ -180,97 +182,111 @@ export default function PlanetPage() {
           ))}
         </motion.div>
 
-        {/* Theory content */}
-        {planet.isActive && planet.theory && (
+        {/* Content sections */}
+        {planet.isActive && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="space-y-6"
           >
-            {/* Theory header */}
-            <div className="flex items-center gap-3 mb-6">
-              <BookOpen className={`w-6 h-6 text-transparent bg-gradient-to-r ${planet.gradientFrom} ${planet.gradientTo} bg-clip-text`} />
-              <h2 className="text-2xl font-bold text-white">Teoría Resumida</h2>
-            </div>
-
-            {/* Definition */}
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                <Sparkles className={`w-5 h-5 bg-gradient-to-r ${planet.gradientFrom} ${planet.gradientTo} bg-clip-text`} />
-                Definición
-              </h3>
-              <p className="text-white/80 leading-relaxed">{planet.theory.definition}</p>
-            </div>
-
-            {/* Formulas */}
-            {planet.theory.formulas.length > 0 && (
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <h3 className="text-lg font-semibold text-white mb-4">Fórmulas Principales</h3>
-                <div className="grid gap-4">
-                  {planet.theory.formulas.map((formula, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 + index * 0.1 }}
-                      className="p-4 rounded-xl bg-gradient-to-r from-white/5 to-transparent border-l-4 border-l-current"
-                      style={{ borderColor: planet.color }}
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                        <span className="text-lg font-mono font-bold text-white bg-white/10 px-3 py-1 rounded-lg inline-block">
-                          {formula.formula}
-                        </span>
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-white/70">{formula.name}: </span>
-                          <span className="text-sm text-white/60">{formula.description}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+            {/* Theory content */}
+            {activeModule === 'teoria' && planet.theory && (
+              <>
+                {/* Theory header */}
+                <div className="flex items-center gap-3 mb-6">
+                  <BookOpen className={`w-6 h-6 text-transparent bg-gradient-to-r ${planet.gradientFrom} ${planet.gradientTo} bg-clip-text`} />
+                  <h2 className="text-2xl font-bold text-white">Teoría Resumida</h2>
                 </div>
-              </div>
+
+                {/* Definition */}
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Sparkles className={`w-5 h-5 bg-gradient-to-r ${planet.gradientFrom} ${planet.gradientTo} bg-clip-text`} />
+                    Definición
+                  </h3>
+                  <p className="text-white/80 leading-relaxed">{planet.theory.definition}</p>
+                </div>
+
+                {/* Formulas */}
+                {planet.theory.formulas.length > 0 && (
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <h3 className="text-lg font-semibold text-white mb-4">Fórmulas Principales</h3>
+                    <div className="grid gap-4">
+                      {planet.theory.formulas.map((formula, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.6 + index * 0.1 }}
+                          className="p-4 rounded-xl bg-gradient-to-r from-white/5 to-transparent border-l-4 border-l-current"
+                          style={{ borderColor: planet.color }}
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                            <span className="text-lg font-mono font-bold text-white bg-white/10 px-3 py-1 rounded-lg inline-block">
+                              {formula.formula}
+                            </span>
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-white/70">{formula.name}: </span>
+                              <span className="text-sm text-white/60">{formula.description}</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Units */}
+                {planet.theory.units && (
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <h3 className="text-lg font-semibold text-white mb-3">Unidades</h3>
+                    <p className="text-white/80">{planet.theory.units}</p>
+                  </div>
+                )}
+
+                {/* Applications */}
+                {planet.theory.applications && (
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <h3 className="text-lg font-semibold text-white mb-3">Aplicaciones</h3>
+                    <p className="text-white/80">{planet.theory.applications}</p>
+                  </div>
+                )}
+
+                {/* Key points */}
+                {planet.theory.keyPoints.length > 0 && (
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <h3 className="text-lg font-semibold text-white mb-4">Puntos Clave</h3>
+                    <ul className="space-y-3">
+                      {planet.theory.keyPoints.map((point, index) => (
+                        <motion.li
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.7 + index * 0.05 }}
+                          className="flex items-start gap-3"
+                        >
+                          <span 
+                            className={`w-6 h-6 rounded-full bg-gradient-to-br ${planet.gradientFrom} ${planet.gradientTo} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5`}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="text-white/80">{point}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Units */}
-            {planet.theory.units && (
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <h3 className="text-lg font-semibold text-white mb-3">Unidades</h3>
-                <p className="text-white/80">{planet.theory.units}</p>
-              </div>
-            )}
-
-            {/* Applications */}
-            {planet.theory.applications && (
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <h3 className="text-lg font-semibold text-white mb-3">Aplicaciones</h3>
-                <p className="text-white/80">{planet.theory.applications}</p>
-              </div>
-            )}
-
-            {/* Key points */}
-            {planet.theory.keyPoints.length > 0 && (
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <h3 className="text-lg font-semibold text-white mb-4">Puntos Clave</h3>
-                <ul className="space-y-3">
-                  {planet.theory.keyPoints.map((point, index) => (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 + index * 0.05 }}
-                      className="flex items-start gap-3"
-                    >
-                      <span 
-                        className={`w-6 h-6 rounded-full bg-gradient-to-br ${planet.gradientFrom} ${planet.gradientTo} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5`}
-                      >
-                        {index + 1}
-                      </span>
-                      <span className="text-white/80">{point}</span>
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
+            {/* Exercises content */}
+            {activeModule === 'ejercicios' && (
+              <ExercisePlayer 
+                planetId={planet.id}
+                planetName={planet.theme}
+                planetColor={planet.color}
+              />
             )}
 
             {/* Ask AI Section */}
