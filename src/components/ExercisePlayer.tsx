@@ -1,16 +1,17 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   RefreshCw, Check, X, Lightbulb, Calculator, 
-  ChevronDown, ChevronUp, Sparkles, Trophy, ArrowRight
+  ChevronDown, ChevronUp, Sparkles, Trophy, ArrowRight, Star
 } from 'lucide-react'
 import { 
   Exercise, 
   getExercisesByPlanet, 
   generateExerciseInstance 
 } from '@/data/exercises'
+import { usePoints, POINTS_CONFIG } from '@/contexts/PointsContext'
 
 interface ExercisePlayerProps {
   planetId: string
@@ -23,6 +24,8 @@ export default function ExercisePlayer({
   planetName, 
   planetColor 
 }: ExercisePlayerProps) {
+  const { addExercisePoints, stats } = usePoints()
+  
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
   const [userAnswer, setUserAnswer] = useState('')
   const [showResult, setShowResult] = useState(false)
@@ -31,7 +34,13 @@ export default function ExercisePlayer({
   const [showHints, setShowHints] = useState(false)
   const [score, setScore] = useState({ correct: 0, total: 0 })
   const [difficulty, setDifficulty] = useState<'facil' | 'medio' | 'dificil' | 'todos'>('todos')
-  const [instanceKey, setInstanceKey] = useState(0) // Para forzar regeneración
+  const [instanceKey, setInstanceKey] = useState(0)
+  
+  // Estados para puntos
+  const [pointsEarned, setPointsEarned] = useState(0)
+  const [showPointsAnimation, setShowPointsAnimation] = useState(false)
+  const [isFirstTry, setIsFirstTry] = useState(true)
+  const [sessionExercises, setSessionExercises] = useState<Set<string>>(new Set())
 
   // Cargar ejercicios usando useMemo
   const exercises = useMemo(() => getExercisesByPlanet(planetId), [planetId])
@@ -50,6 +59,14 @@ export default function ExercisePlayer({
     const exercise = filteredExercises[currentExerciseIndex] || filteredExercises[0]
     return exercise ? generateExerciseInstance(exercise) : null
   }, [filteredExercises, currentExerciseIndex, instanceKey])
+
+  // Resetear primer intento cuando cambia el ejercicio
+  useEffect(() => {
+    if (instance) {
+      const exerciseKey = instance.exercise.id + JSON.stringify(instance.values)
+      setIsFirstTry(!sessionExercises.has(exerciseKey))
+    }
+  }, [instance, sessionExercises])
 
   // Generar nuevo ejercicio
   const generateNew = useCallback(() => {
@@ -71,6 +88,7 @@ export default function ExercisePlayer({
     setIsCorrect(false)
     setShowSolution(false)
     setShowHints(false)
+    setPointsEarned(0)
   }, [filteredExercises, currentExerciseIndex])
 
   // Cambiar dificultad
@@ -83,6 +101,7 @@ export default function ExercisePlayer({
     setIsCorrect(false)
     setShowSolution(false)
     setShowHints(false)
+    setSessionExercises(new Set()) // Reset session para nueva dificultad
   }
 
   // Verificar respuesta
@@ -99,12 +118,44 @@ export default function ExercisePlayer({
       correct: prev.correct + (correct ? 1 : 0),
       total: prev.total + 1
     }))
+
+    // Marcar ejercicio como visto
+    const exerciseKey = instance.exercise.id + JSON.stringify(instance.values)
+    setSessionExercises(prev => new Set(prev).add(exerciseKey))
+
+    // Calcular y agregar puntos
+    if (correct) {
+      const points = addExercisePoints(
+        instance.exercise.difficulty,
+        correct,
+        isFirstTry,
+        planetId
+      )
+      setPointsEarned(points)
+      
+      // Mostrar animacion de puntos
+      setShowPointsAnimation(true)
+      setTimeout(() => setShowPointsAnimation(false), 2000)
+    } else {
+      // Registrar ejercicio incorrecto
+      addExercisePoints(instance.exercise.difficulty, false, false, planetId)
+      setPointsEarned(0)
+    }
   }
 
   // Manejar tecla Enter
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !showResult) {
       checkAnswer()
+    }
+  }
+
+  // Obtener puntos base según dificultad
+  const getBasePoints = (diff: 'facil' | 'medio' | 'dificil') => {
+    switch (diff) {
+      case 'facil': return POINTS_CONFIG.EXERCISE_EASY
+      case 'medio': return POINTS_CONFIG.EXERCISE_MEDIUM
+      case 'dificil': return POINTS_CONFIG.EXERCISE_HARD
     }
   }
 
@@ -115,7 +166,7 @@ export default function ExercisePlayer({
         <Calculator className="w-16 h-16 mx-auto mb-4 text-white/30" />
         <h3 className="text-xl font-semibold text-white mb-2">Ejercicios en desarrollo</h3>
         <p className="text-white/60">
-          Los ejercicios para {planetName} estarán disponibles próximamente.
+          Los ejercicios para {planetName} estaran disponibles proximamente.
         </p>
       </div>
     )
@@ -123,7 +174,25 @@ export default function ExercisePlayer({
 
   return (
     <div className="space-y-6">
-      {/* Header con filtros y puntuación */}
+      {/* Animacion de puntos */}
+      <AnimatePresence>
+        {showPointsAnimation && pointsEarned > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.5 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.5 }}
+            className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+          >
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold px-8 py-4 rounded-full shadow-2xl shadow-yellow-500/50 text-2xl flex items-center gap-2">
+              <Star className="w-6 h-6" />
+              +{pointsEarned} puntos
+              {isFirstTry && <span className="text-sm font-normal bg-black/20 px-2 py-0.5 rounded">Primer intento!</span>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header con filtros y puntuacion */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Calculator className="w-6 h-6" style={{ color: planetColor }} />
@@ -143,17 +212,23 @@ export default function ExercisePlayer({
                     : 'text-white/50 hover:text-white'
                 }`}
               >
-                {d === 'todos' ? 'Todos' : d === 'facil' ? 'Fácil' : d === 'medio' ? 'Medio' : 'Difícil'}
+                {d === 'todos' ? 'Todos' : d === 'facil' ? 'Facil' : d === 'medio' ? 'Medio' : 'Dificil'}
               </button>
             ))}
           </div>
           
-          {/* Puntuación */}
+          {/* Puntuacion de sesion */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg">
             <Trophy className="w-4 h-4 text-amber-400" />
             <span className="text-white font-medium">{score.correct}/{score.total}</span>
           </div>
         </div>
+      </div>
+
+      {/* Info de puntos */}
+      <div className="flex items-center gap-4 text-sm text-white/50">
+        <span>Puntos: Facil {POINTS_CONFIG.EXERCISE_EASY} | Medio {POINTS_CONFIG.EXERCISE_MEDIUM} | Dificil {POINTS_CONFIG.EXERCISE_HARD}</span>
+        <span className="text-yellow-400">+{POINTS_CONFIG.EXERCISE_FIRST_TRY} bonus primer intento</span>
       </div>
 
       {/* Tarjeta del ejercicio */}
@@ -175,8 +250,11 @@ export default function ExercisePlayer({
                     ? 'bg-yellow-500/20 text-yellow-400'
                     : 'bg-red-500/20 text-red-400'
                 }`}>
-                  {instance.exercise.difficulty === 'facil' ? 'Fácil' : 
-                   instance.exercise.difficulty === 'medio' ? 'Medio' : 'Difícil'}
+                  {instance.exercise.difficulty === 'facil' ? 'Facil' : 
+                   instance.exercise.difficulty === 'medio' ? 'Medio' : 'Dificil'}
+                </span>
+                <span className="text-yellow-400 text-sm font-medium">
+                  +{getBasePoints(instance.exercise.difficulty)} pts
                 </span>
                 <h3 className="text-lg font-semibold text-white">
                   {instance.exercise.title}
@@ -200,9 +278,9 @@ export default function ExercisePlayer({
               </p>
             </div>
 
-            {/* Fórmula principal */}
+            {/* Formula principal */}
             <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-sm text-white/50 mb-2">Fórmula principal:</p>
+              <p className="text-sm text-white/50 mb-2">Formula principal:</p>
               <p className="text-xl font-mono text-white">
                 {instance.exercise.formula}
               </p>
@@ -288,12 +366,18 @@ export default function ExercisePlayer({
                   {isCorrect ? (
                     <>
                       <Check className="w-6 h-6 text-green-400" />
-                      <div>
-                        <p className="font-semibold text-green-400">¡Correcto!</p>
+                      <div className="flex-1">
+                        <p className="font-semibold text-green-400">Correcto!</p>
                         <p className="text-green-300/70 text-sm">
                           La respuesta es {instance.answer} {instance.exercise.answerUnit}
                         </p>
                       </div>
+                      {pointsEarned > 0 && (
+                        <div className="flex items-center gap-1 text-yellow-400 font-bold">
+                          <Star className="w-5 h-5" />
+                          +{pointsEarned} pts
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
@@ -309,16 +393,16 @@ export default function ExercisePlayer({
                   )}
                 </div>
 
-                {/* Botón para ver solución */}
+                {/* Boton para ver solucion */}
                 <button
                   onClick={() => setShowSolution(!showSolution)}
                   className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
                 >
-                  {showSolution ? 'Ocultar solución' : 'Ver solución detallada'}
+                  {showSolution ? 'Ocultar solucion' : 'Ver solucion detallada'}
                   {showSolution ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
 
-                {/* Solución detallada */}
+                {/* Solucion detallada */}
                 <AnimatePresence>
                   {showSolution && (
                     <motion.div
@@ -327,7 +411,7 @@ export default function ExercisePlayer({
                       exit={{ opacity: 0, height: 0 }}
                       className="p-4 bg-white/5 border border-white/10 rounded-xl"
                     >
-                      <h4 className="font-semibold text-white mb-3">Solución paso a paso:</h4>
+                      <h4 className="font-semibold text-white mb-3">Solucion paso a paso:</h4>
                       <ol className="space-y-2">
                         {instance.exercise.solutionSteps.map((step, i) => (
                           <li key={i} className="flex items-start gap-3">
@@ -344,7 +428,7 @@ export default function ExercisePlayer({
                   )}
                 </AnimatePresence>
 
-                {/* Botón para nuevo ejercicio */}
+                {/* Boton para nuevo ejercicio */}
                 <button
                   onClick={generateNew}
                   className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"

@@ -3,13 +3,14 @@
 import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Info, Volume2, VolumeX, Settings } from 'lucide-react'
+import { Sparkles, Info, Volume2, VolumeX, Settings, User } from 'lucide-react'
 import Link from 'next/link'
 import Universe from '@/components/Universe'
 import Planet from '@/components/Planet'
 import Sun from '@/components/Sun'
 import { planets } from '@/data/planets'
 import { useAudio, AudioController } from '@/components/AudioContext'
+import { ScoreDisplay } from '@/components/ScoreDisplay'
 
 export default function HomePage() {
   const router = useRouter()
@@ -68,6 +69,10 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Score display compacto */}
+            <Link href="/perfil">
+              <ScoreDisplay variant="compact" />
+            </Link>
             <Link
               href="/admin"
               className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-amber-500/20 hover:border-amber-500/50 transition-colors group"

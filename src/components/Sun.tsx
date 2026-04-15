@@ -2,13 +2,15 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useCallback } from 'react'
-import { HelpCircle, CheckCircle, XCircle, RefreshCw, Trophy, Sparkles } from 'lucide-react'
+import { HelpCircle, CheckCircle, XCircle, RefreshCw, Trophy, Sparkles, Star } from 'lucide-react'
 import { quizQuestions, QuizQuestion, getRandomQuestions } from '@/data/quizQuestions'
+import { usePoints, POINTS_CONFIG } from '@/contexts/PointsContext'
 
 interface QuizState {
   questions: QuizQuestion[];
   currentIndex: number;
   score: number;
+  correctAnswers: number;
   selectedAnswer: number | null;
   showResult: boolean;
   isCorrect: boolean | null;
@@ -16,28 +18,36 @@ interface QuizState {
 }
 
 export default function Sun() {
+  const { addQuizPoints, unlockAchievement } = usePoints()
+  
   const [quizState, setQuizState] = useState<QuizState>({
     questions: [],
     currentIndex: 0,
     score: 0,
+    correctAnswers: 0,
     selectedAnswer: null,
     showResult: false,
     isCorrect: null,
     quizCompleted: false
   })
   const [showQuiz, setShowQuiz] = useState(false)
+  const [pointsEarned, setPointsEarned] = useState(0)
+  const [showPointsAnimation, setShowPointsAnimation] = useState(false)
+  const [totalQuizPoints, setTotalQuizPoints] = useState(0)
 
   const startNewQuiz = useCallback(() => {
     setQuizState({
       questions: getRandomQuestions(5),
       currentIndex: 0,
       score: 0,
+      correctAnswers: 0,
       selectedAnswer: null,
       showResult: false,
       isCorrect: null,
       quizCompleted: false
     })
     setShowQuiz(true)
+    setTotalQuizPoints(0)
   }, [])
 
   const handleAnswer = (answerIndex: number) => {
@@ -46,17 +56,40 @@ export default function Sun() {
     const currentQuestion = quizState.questions[quizState.currentIndex]
     const isCorrect = answerIndex === currentQuestion.correctAnswer
 
+    // Calcular puntos
+    let points = 0
+    if (isCorrect) {
+      points = POINTS_CONFIG.QUIZ_CORRECT
+      setPointsEarned(points)
+      setTotalQuizPoints(prev => prev + points)
+      setShowPointsAnimation(true)
+      setTimeout(() => setShowPointsAnimation(false), 1500)
+    }
+
     setQuizState(prev => ({
       ...prev,
       selectedAnswer: answerIndex,
       showResult: true,
       isCorrect,
-      score: isCorrect ? prev.score + 20 : prev.score
+      score: isCorrect ? prev.score + 20 : prev.score,
+      correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers
     }))
   }
 
   const nextQuestion = () => {
     if (quizState.currentIndex >= quizState.questions.length - 1) {
+      // Quiz completado - dar puntos
+      const isPerfect = quizState.correctAnswers === quizState.questions.length
+      const correctCount = quizState.correctAnswers
+      
+      // Agregar puntos al sistema
+      addQuizPoints(true, quizState.questions.length, correctCount, 'quiz-sun')
+      
+      // Bonus por quiz perfecto
+      if (isPerfect) {
+        unlockAchievement('quiz-perfect')
+      }
+      
       setQuizState(prev => ({ ...prev, quizCompleted: true }))
     } else {
       setQuizState(prev => ({
@@ -78,6 +111,23 @@ export default function Sun() {
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 1, ease: 'easeOut' }}
     >
+      {/* Animacion de puntos */}
+      <AnimatePresence>
+        {showPointsAnimation && pointsEarned > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.5 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.5 }}
+            className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+          >
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold px-8 py-4 rounded-full shadow-2xl shadow-yellow-500/50 text-2xl flex items-center gap-2">
+              <Star className="w-6 h-6" />
+              +{pointsEarned} puntos
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Outer glow rings */}
       {[...Array(3)].map((_, i) => (
         <motion.div
@@ -175,7 +225,7 @@ export default function Sun() {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           >
             <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 rounded-full shadow-lg">
-              <span className="text-white font-bold text-sm md:text-base">🎯 QUIZ FÍSICA</span>
+              <span className="text-white font-bold text-sm md:text-base">QUIZ FISICA</span>
             </div>
             <p className="text-white/60 text-xs mt-2">Click para comenzar</p>
           </motion.div>
@@ -212,15 +262,27 @@ export default function Sun() {
               <Trophy className="w-16 h-16 mx-auto text-yellow-400 mb-4" />
             </motion.div>
             
-            <h3 className="text-xl font-bold text-white mb-2">¡Quiz Completado!</h3>
+            <h3 className="text-xl font-bold text-white mb-2">Quiz Completado!</h3>
             
             <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl p-4 mb-4">
-              <p className="text-3xl font-bold text-amber-400">{quizState.score}</p>
-              <p className="text-white/60 text-sm">puntos obtenidos</p>
+              <p className="text-3xl font-bold text-amber-400">{quizState.correctAnswers}/{quizState.questions.length}</p>
+              <p className="text-white/60 text-sm">respuestas correctas</p>
+            </div>
+
+            {/* Puntos ganados */}
+            <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-center gap-2">
+                <Star className="w-5 h-5 text-yellow-400" />
+                <p className="text-2xl font-bold text-yellow-400">+{totalQuizPoints + (quizState.correctAnswers === quizState.questions.length ? POINTS_CONFIG.QUIZ_PERFECT : 0)}</p>
+              </div>
+              <p className="text-white/60 text-sm">puntos ganados</p>
+              {quizState.correctAnswers === quizState.questions.length && (
+                <p className="text-green-400 text-xs mt-1">+{POINTS_CONFIG.QUIZ_PERFECT} bonus Quiz Perfecto!</p>
+              )}
             </div>
             
             <p className="text-white/80 mb-4">
-              Respondiste correctamente {quizState.score / 20} de {quizState.questions.length} preguntas
+              Respondiste correctamente {quizState.correctAnswers} de {quizState.questions.length} preguntas
             </p>
 
             <div className="flex gap-2">
@@ -260,7 +322,10 @@ export default function Sun() {
                   animate={{ width: `${((quizState.currentIndex + 1) / quizState.questions.length) * 100}%` }}
                 />
               </div>
-              <span className="text-xs text-amber-400 font-bold">{quizState.score} pts</span>
+              <span className="text-xs text-yellow-400 font-bold flex items-center gap-1">
+                <Star className="w-3 h-3" />
+                {totalQuizPoints} pts
+              </span>
             </div>
 
             {/* Topic badge */}
@@ -319,7 +384,7 @@ export default function Sun() {
                 >
                   <p className="text-xs text-white/80 leading-relaxed">
                     <strong className={quizState.isCorrect ? 'text-green-400' : 'text-red-400'}>
-                      {quizState.isCorrect ? '✓ ¡Correcto!' : '✗ Incorrecto'}
+                      {quizState.isCorrect ? 'Correcto! +' + POINTS_CONFIG.QUIZ_CORRECT + ' pts' : 'Incorrecto'}
                     </strong>
                     <br />
                     {currentQuestion?.explanation}
@@ -345,7 +410,7 @@ export default function Sun() {
               onClick={() => setShowQuiz(false)}
               className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-white/40 hover:text-white/80 transition-colors"
             >
-              ✕
+              X
             </button>
           </motion.div>
         </AnimatePresence>
