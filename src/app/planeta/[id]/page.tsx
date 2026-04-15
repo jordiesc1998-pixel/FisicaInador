@@ -8,15 +8,18 @@ import {
 } from 'lucide-react'
 import { getPlanetById } from '@/data/planets'
 import { getExercisesByPlanet } from '@/data/exercises'
-import { useCallback, useState } from 'react'
+import { getSimulatorsByPlanet, hasSimulators } from '@/data/simulators'
+import { useCallback, useState, useMemo } from 'react'
 import AIAssistant from '@/components/AIAssistant'
 import ExercisePlayer from '@/components/ExercisePlayer'
+import PhETSimulator from '@/components/PhETSimulator'
 
-const modules = [
+// Los módulos se definen dinámicamente según el planeta
+const getModules = (planetId: string) => [
   { id: 'teoria', name: 'Teoría Resumida', icon: BookOpen, available: true },
   { id: 'imagen', name: 'Imagen del Tema', icon: ImageIcon, available: false },
   { id: 'ejercicios', name: 'Ejercicios', icon: Calculator, available: true },
-  { id: 'juego', name: 'Juego', icon: Gamepad2, available: false },
+  { id: 'juego', name: 'Simuladores', icon: Gamepad2, available: hasSimulators(planetId) },
   { id: 'video', name: 'Video', icon: Video, available: false },
   { id: 'asistente', name: 'Asistente IA', icon: Bot, available: true },
 ]
@@ -27,6 +30,12 @@ export default function PlanetPage() {
   const planet = getPlanetById(params.id as string)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [activeModule, setActiveModule] = useState<string>('teoria')
+
+  // Módulos dinámicos según el planeta
+  const modules = useMemo(() => planet ? getModules(planet.id) : [], [planet])
+  
+  // Simuladores del planeta
+  const simulators = useMemo(() => planet ? getSimulatorsByPlanet(planet.id) : [], [planet])
 
   const handleGoBack = useCallback(() => {
     router.push('/')
@@ -286,6 +295,15 @@ export default function PlanetPage() {
                 planetId={planet.id}
                 planetName={planet.theme}
                 planetColor={planet.color}
+              />
+            )}
+
+            {/* Simulators content */}
+            {activeModule === 'juego' && simulators.length > 0 && (
+              <PhETSimulator 
+                simulators={simulators}
+                planetColor={planet.color}
+                planetName={planet.name}
               />
             )}
 
