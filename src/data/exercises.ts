@@ -3612,6 +3612,233 @@ export const keplerExercises: Exercise[] = [
 ];
 
 // ============================================
+// PLANETA RELATIVIDAD - Relatividad Especial
+// ============================================
+export const relatividadExercises: Exercise[] = [
+  {
+    id: 'relatividad-1',
+    planetId: 'relatividad',
+    title: 'Factor de Lorentz',
+    difficulty: 'facil',
+    template: 'Una nave espacial viaja a {v}×10⁸ m/s. ¿Cuál es el factor de Lorentz γ? (c = 3×10⁸ m/s)',
+    variables: [
+      { name: 'velocidad', symbol: 'v', min: 1, max: 2.9, decimals: 1, unit: '×10⁸ m/s' }
+    ],
+    question: 'Calcula el factor de Lorentz.',
+    answerUnit: '',
+    calculateAnswer: (v) => 1 / Math.sqrt(1 - Math.pow(v.v * 1e8 / 3e8, 2)),
+    solutionSteps: [
+      'Datos: v = {v}×10⁸ m/s, c = 3×10⁸ m/s',
+      'Factor de Lorentz: γ = 1/√(1 - v²/c²)',
+      'γ = 1/√(1 - ({v}/3)²) = {answer}'
+    ],
+    formula: 'γ = 1/√(1 - v²/c²)',
+    hints: ['γ = 1 cuando v = 0', 'γ aumenta sin límite cuando v se acerca a c']
+  },
+  {
+    id: 'relatividad-2',
+    planetId: 'relatividad',
+    title: 'Dilatación del tiempo',
+    difficulty: 'facil',
+    template: 'Un reloj en una nave que viaja a {v}×10⁸ m/s marca {t} segundos. ¿Cuánto tiempo pasa para un observador en reposo?',
+    variables: [
+      { name: 'velocidad', symbol: 'v', min: 1.5, max: 2.8, decimals: 1, unit: '×10⁸ m/s' },
+      { name: 'tiempo', symbol: 't', min: 1, max: 10, unit: 's' }
+    ],
+    question: 'Calcula el tiempo dilatado.',
+    answerUnit: 's',
+    calculateAnswer: (v) => v.t / Math.sqrt(1 - Math.pow(v.v * 1e8 / 3e8, 2)),
+    solutionSteps: [
+      'Datos: v = {v}×10⁸ m/s, t₀ = {t} s (tiempo propio)',
+      'Dilatación: t = t₀/√(1 - v²/c²) = γ·t₀',
+      'γ = {gamma}',
+      't = {gamma} × {t} = {answer} s'
+    ],
+    formula: 't = γ·t₀',
+    hints: ['El tiempo propio es el más corto', 'El observador en reposo ve el tiempo dilatado']
+  },
+  {
+    id: 'relatividad-3',
+    planetId: 'relatividad',
+    title: 'Contracción de longitud',
+    difficulty: 'facil',
+    template: 'Una nave de {L0} m de longitud viaja a {v}×10⁸ m/s. ¿Cuál es su longitud para un observador en reposo?',
+    variables: [
+      { name: 'longitud', symbol: 'L0', min: 50, max: 200, unit: 'm' },
+      { name: 'velocidad', symbol: 'v', min: 1.5, max: 2.8, decimals: 1, unit: '×10⁸ m/s' }
+    ],
+    question: 'Calcula la longitud contraída.',
+    answerUnit: 'm',
+    calculateAnswer: (v) => v.L0 * Math.sqrt(1 - Math.pow(v.v * 1e8 / 3e8, 2)),
+    solutionSteps: [
+      'Datos: L₀ = {L0} m, v = {v}×10⁸ m/s',
+      'Contracción: L = L₀·√(1 - v²/c²)',
+      'L = {L0} × √(1 - ({v}/3)²) = {answer} m'
+    ],
+    formula: 'L = L₀·√(1 - v²/c²)',
+    hints: ['La longitud propia es la máxima', 'Solo se contrae en dirección del movimiento']
+  },
+  {
+    id: 'relatividad-4',
+    planetId: 'relatividad',
+    title: 'Velocidad relativa (mismo sentido)',
+    difficulty: 'medio',
+    template: 'Una nave A viaja a {v1}×10⁸ m/s y otra nave B viaja en el mismo sentido a {v2}×10⁸ m/s respecto a Tierra. ¿Cuál es la velocidad de B vista desde A?',
+    variables: [
+      { name: 'velocidad1', symbol: 'v1', min: 1, max: 2, decimals: 1, unit: '×10⁸ m/s' },
+      { name: 'velocidad2', symbol: 'v2', min: 1.5, max: 2.5, decimals: 1, unit: '×10⁸ m/s' }
+    ],
+    question: 'Calcula la velocidad relativa.',
+    answerUnit: '×10⁸ m/s',
+    calculateAnswer: (v) => ((v.v2 * 1e8 - v.v1 * 1e8) / (1 - (v.v1 * v.v2 * 1e16) / 9e16)) / 1e8,
+    solutionSteps: [
+      'Datos: v₁ = {v1}×10⁸ m/s, v₂ = {v2}×10⁸ m/s',
+      'Velocidad relativa relativista: u = (v₂ - v₁)/(1 - v₁v₂/c²)',
+      'u = ({v2} - {v1})/(1 - {v1}×{v2}/9)×10⁸ m/s',
+      'u = {answer}×10⁸ m/s'
+    ],
+    formula: 'u = (v₂ - v₁)/(1 - v₁v₂/c²)',
+    hints: ['La suma relativista nunca supera c', 'Si v << c, se aproxima a la resta clásica']
+  },
+  {
+    id: 'relatividad-5',
+    planetId: 'relatividad',
+    title: 'Velocidad relativa (sentidos opuestos)',
+    difficulty: 'medio',
+    template: 'Dos naves se alejan en direcciones opuestas a {v1}×10⁸ m/s y {v2}×10⁸ m/s respecto a Tierra. ¿Con qué velocidad se alejan entre sí?',
+    variables: [
+      { name: 'velocidad1', symbol: 'v1', min: 1, max: 2.5, decimals: 1, unit: '×10⁸ m/s' },
+      { name: 'velocidad2', symbol: 'v2', min: 1, max: 2.5, decimals: 1, unit: '×10⁸ m/s' }
+    ],
+    question: 'Calcula la velocidad relativa de separación.',
+    answerUnit: '×10⁸ m/s',
+    calculateAnswer: (v) => ((v.v1 * 1e8 + v.v2 * 1e8) / (1 + (v.v1 * v.v2 * 1e16) / 9e16)) / 1e8,
+    solutionSteps: [
+      'Datos: v₁ = {v1}×10⁸ m/s, v₂ = {v2}×10⁸ m/s',
+      'Para sentidos opuestos: u = (v₁ + v₂)/(1 + v₁v₂/c²)',
+      'u = ({v1} + {v2})/(1 + {v1}×{v2}/9)×10⁸ m/s',
+      'u = {answer}×10⁸ m/s'
+    ],
+    formula: 'u = (v₁ + v₂)/(1 + v₁v₂/c²)',
+    hints: ['El resultado es menor que la suma clásica', 'Nunca puede superar la velocidad de la luz']
+  },
+  {
+    id: 'relatividad-6',
+    planetId: 'relatividad',
+    title: 'Energía en reposo (E=mc²)',
+    difficulty: 'facil',
+    template: '¿Cuál es la energía en reposo de un objeto de {m} kg?',
+    variables: [
+      { name: 'masa', symbol: 'm', min: 0.001, max: 1, decimals: 3, unit: 'kg' }
+    ],
+    question: 'Calcula la energía en reposo.',
+    answerUnit: 'MJ',
+    calculateAnswer: (v) => v.m * 9e16 / 1e6,
+    solutionSteps: [
+      'Datos: m = {m} kg, c = 3×10⁸ m/s',
+      'Energía en reposo: E₀ = mc²',
+      'E₀ = {m} × (3×10⁸)² = {answer} MJ'
+    ],
+    formula: 'E₀ = mc²',
+    hints: ['1 kg de masa equivale a 9×10¹⁶ J', 'La masa es una forma concentrada de energía']
+  },
+  {
+    id: 'relatividad-7',
+    planetId: 'relatividad',
+    title: 'Energía total relativista',
+    difficulty: 'medio',
+    template: 'Una partícula de {m}×10⁻²⁷ kg se mueve a {v}×10⁸ m/s. ¿Cuál es su energía total?',
+    variables: [
+      { name: 'masa', symbol: 'm', min: 1, max: 10, unit: '×10⁻²⁷ kg' },
+      { name: 'velocidad', symbol: 'v', min: 1.5, max: 2.9, decimals: 1, unit: '×10⁸ m/s' }
+    ],
+    question: 'Calcula la energía total en MeV.',
+    answerUnit: 'MeV',
+    calculateAnswer: (v) => {
+      const gamma = 1 / Math.sqrt(1 - Math.pow(v.v / 3, 2));
+      return (gamma * v.m * 1e-27 * 9e16) / 1.6e-13;
+    },
+    solutionSteps: [
+      'Datos: m = {m}×10⁻²⁷ kg, v = {v}×10⁸ m/s',
+      'Factor γ = {gamma}',
+      'Energía total: E = γmc²',
+      'E = {gamma} × {m}×10⁻²⁷ × 9×10¹⁶ = {answer} MeV'
+    ],
+    formula: 'E = γmc²',
+    hints: ['1 MeV = 1.6×10⁻¹³ J', 'La energía total incluye la de reposo más la cinética']
+  },
+  {
+    id: 'relatividad-8',
+    planetId: 'relatividad',
+    title: 'Masa relativista',
+    difficulty: 'medio',
+    template: 'Una partícula tiene masa en reposo de {m0}×10⁻²⁷ kg y viaja a {v}×10⁸ m/s. ¿Cuál es su masa relativista?',
+    variables: [
+      { name: 'masa0', symbol: 'm0', min: 1, max: 10, unit: '×10⁻²⁷ kg' },
+      { name: 'velocidad', symbol: 'v', min: 1.5, max: 2.9, decimals: 1, unit: '×10⁸ m/s' }
+    ],
+    question: 'Calcula la masa relativista.',
+    answerUnit: '×10⁻²⁷ kg',
+    calculateAnswer: (v) => v.m0 / Math.sqrt(1 - Math.pow(v.v / 3, 2)),
+    solutionSteps: [
+      'Datos: m₀ = {m0}×10⁻²⁷ kg, v = {v}×10⁸ m/s',
+      'Masa relativista: m = γm₀ = m₀/√(1 - v²/c²)',
+      'm = {m0}/√(1 - ({v}/3)²) = {answer}×10⁻²⁷ kg'
+    ],
+    formula: 'm = γm₀',
+    hints: ['La masa aparente aumenta con la velocidad', 'A v→c, la masa tiende a infinito']
+  },
+  {
+    id: 'relatividad-9',
+    planetId: 'relatividad',
+    title: 'Tiempo de viaje interestelar',
+    difficulty: 'dificil',
+    template: 'Una nave viaja a {v}×10⁸ m/s hacia una estrella a {d} años-luz. ¿Cuánto tiempo dura el viaje para los astronautas?',
+    variables: [
+      { name: 'velocidad', symbol: 'v', min: 2, max: 2.95, decimals: 2, unit: '×10⁸ m/s' },
+      { name: 'distancia', symbol: 'd', min: 10, max: 100, unit: 'años-luz' }
+    ],
+    question: 'Calcula el tiempo propio del viaje.',
+    answerUnit: 'años',
+    calculateAnswer: (v) => {
+      const gamma = 1 / Math.sqrt(1 - Math.pow(v.v / 3, 2));
+      const tiempoTierra = v.d / (v.v / 3);
+      return tiempoTierra / gamma;
+    },
+    solutionSteps: [
+      'Datos: v = {v}×10⁸ m/s, d = {d} años-luz',
+      'Tiempo en Tierra: t = d/(v/c) = {tTierra} años',
+      'Factor γ = {gamma}',
+      'Tiempo propio: t₀ = t/γ = {answer} años'
+    ],
+    formula: 't₀ = t/γ',
+    hints: ['Para los astronautas, el tiempo pasa más lento', 'Distancias aparentes se contraen']
+  },
+  {
+    id: 'relatividad-10',
+    planetId: 'relatividad',
+    title: 'Velocidad necesaria para dilatación',
+    difficulty: 'dificil',
+    template: 'Un astronauta quiere que su viaje de {t0} años (tiempo propio) parezca de {t} años para observadores en Tierra. ¿A qué fracción de c debe viajar?',
+    variables: [
+      { name: 'tiempoPropio', symbol: 't0', min: 1, max: 5, unit: 'años' },
+      { name: 'tiempoTierra', symbol: 't', min: 10, max: 50, unit: 'años' }
+    ],
+    question: 'Calcula v/c.',
+    answerUnit: 'c',
+    calculateAnswer: (v) => Math.sqrt(1 - Math.pow(v.t0 / v.t, 2)),
+    solutionSteps: [
+      'Datos: t₀ = {t0} años, t = {t} años',
+      'De la dilatación: t = t₀/√(1 - v²/c²)',
+      'γ = t/t₀ = {gamma}',
+      'v/c = √(1 - 1/γ²) = √(1 - ({t0}/{t})²) = {answer} c'
+    ],
+    formula: 'v/c = √(1 - (t₀/t)²)',
+    hints: ['A mayor dilatación temporal, mayor velocidad requerida', 'v nunca puede ser exactamente c para objetos con masa']
+  }
+];
+
+// ============================================
 // Función para obtener ejercicios por planeta
 // ============================================
 export function getExercisesByPlanet(planetId: string): Exercise[] {
@@ -3632,6 +3859,7 @@ export function getExercisesByPlanet(planetId: string): Exercise[] {
     'fem': femExercises,
     'vectores': vectoresExercises,
     'kepler': keplerExercises,
+    'relatividad': relatividadExercises,
   };
   
   return exerciseMap[planetId] || [];
