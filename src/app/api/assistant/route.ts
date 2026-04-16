@@ -1,5 +1,8 @@
-import ZAI from 'z-ai-web-dev-sdk';
 import { NextRequest, NextResponse } from 'next/server';
+
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_BASE_URL = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +15,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Mensaje requerido', success: false },
         { status: 400 }
+      );
+    }
+
+    if (!GROQ_API_KEY) {
+      console.error('[AI Assistant] GROQ_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'API de Groq no configurada', success: false },
+        { status: 500 }
       );
     }
 
@@ -31,71 +42,72 @@ Instrucciones:
 - Usa emojis ocasionalmente para hacer la conversación más amena
 - Limita tus respuestas a un máximo de 3-4 párrafos`;
 
-    console.log('[AI Assistant] Initializing ZAI...');
-    const zai = await ZAI.create();
-    console.log('[AI Assistant] ZAI initialized, sending request...');
+    console.log('[AI Assistant] Calling Groq API...');
+    console.log('[AI Assistant] Model:', GROQ_MODEL);
+    console.log('[AI Assistant] Base URL:', GROQ_BASE_URL);
 
-    const completion = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: message
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
+    // Llamar a la API de Groq
+    const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      }),
     });
 
-    console.log('[AI Assistant] Response received:', completion ? 'OK' : 'NULL');
-
-    // Verificar la respuesta
-    if (!completion) {
-      console.error('[AI Assistant] No completion returned');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[AI Assistant] Groq API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'No se recibió respuesta del modelo', success: false },
+        { error: `Error de Groq API: ${response.status}`, details: errorText, success: false },
         { status: 500 }
       );
     }
 
-    if (!completion.choices || completion.choices.length === 0) {
-      console.error('[AI Assistant] No choices in response:', completion);
+    const data = await response.json();
+    console.log('[AI Assistant] Groq response received');
+
+    const responseContent = data.choices?.[0]?.message?.content;
+
+    if (!responseContent) {
+      console.error('[AI Assistant] No content in response:', data);
       return NextResponse.json(
         { error: 'Respuesta vacía del modelo', success: false },
         { status: 500 }
       );
     }
 
-    const responseContent = completion.choices[0]?.message?.content;
-    
-    if (!responseContent) {
-      console.error('[AI Assistant] No content in message:', completion.choices[0]);
-      return NextResponse.json(
-        { error: 'Contenido vacío en la respuesta', success: false },
-        { status: 500 }
-      );
-    }
-
     console.log('[AI Assistant] Success, response length:', responseContent.length);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       response: responseContent,
-      success: true 
+      success: true
     });
 
   } catch (error: any) {
     console.error('[AI Assistant] Error completo:', error);
     console.error('[AI Assistant] Error message:', error?.message);
-    console.error('[AI Assistant] Error stack:', error?.stack);
-    
+
     return NextResponse.json(
-      { 
-        error: 'Error al procesar la solicitud', 
+      {
+        error: 'Error al procesar la solicitud',
         details: error?.message || 'Error desconocido',
-        success: false 
+        success: false
       },
       { status: 500 }
     );
