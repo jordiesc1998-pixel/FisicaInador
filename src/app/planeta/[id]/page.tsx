@@ -13,13 +13,24 @@ import { useCallback, useState, useMemo } from 'react'
 import AIAssistant from '@/components/AIAssistant'
 import ExercisePlayer from '@/components/ExercisePlayer'
 import PhETSimulator from '@/components/PhETSimulator'
+import dynamic from 'next/dynamic'
+
+// Juegos personalizados por planeta (carga dinámica)
+const ParabolicLauncher = dynamic(() => import('@/components/games/ParabolicLauncher'), { ssr: false })
+
+// Mapa de juegos personalizados disponibles por planeta
+const customGames: Record<string, { name: string; component: React.ComponentType<any> }> = {
+  'parabolico': { name: 'Lanzamiento Parabólico', component: ParabolicLauncher },
+}
+
+const hasCustomGame = (planetId: string) => planetId in customGames
 
 // Los módulos se definen dinámicamente según el planeta
 const getModules = (planetId: string) => [
   { id: 'teoria', name: 'Teoría Resumida', icon: BookOpen, available: true },
   { id: 'imagen', name: 'Imagen del Tema', icon: ImageIcon, available: false },
   { id: 'ejercicios', name: 'Ejercicios', icon: Calculator, available: true },
-  { id: 'juego', name: 'Simuladores', icon: Gamepad2, available: hasSimulators(planetId) },
+  { id: 'juego', name: 'Simuladores', icon: Gamepad2, available: hasSimulators(planetId) || hasCustomGame(planetId) },
   { id: 'video', name: 'Video', icon: Video, available: false },
   { id: 'asistente', name: 'Asistente IA', icon: Bot, available: true },
 ]
@@ -36,6 +47,13 @@ export default function PlanetPage() {
   
   // Simuladores del planeta
   const simulators = useMemo(() => planet ? getSimulatorsByPlanet(planet.id) : [], [planet])
+  
+  // Juego personalizado del planeta
+  const customGame = useMemo(() => planet ? customGames[planet.id] : null, [planet])
+  const showCustomGame = useMemo(() => planet ? hasCustomGame(planet.id) : false, [planet])
+  
+  // Tab de juego activo (simuladores vs juego personalizado)
+  const [gameTab, setGameTab] = useState<'simulators' | 'custom'>('custom')
 
   const handleGoBack = useCallback(() => {
     router.push('/')
@@ -298,13 +316,51 @@ export default function PlanetPage() {
               />
             )}
 
-            {/* Simulators content */}
-            {activeModule === 'juego' && simulators.length > 0 && (
-              <PhETSimulator 
-                simulators={simulators}
-                planetColor={planet.color}
-                planetName={planet.name}
-              />
+            {/* Games/Simulators content */}
+            {activeModule === 'juego' && (
+              <div className="space-y-4">
+                {/* Tabs si hay juego personalizado Y simuladores */}
+                {showCustomGame && simulators.length > 0 && (
+                  <div className="flex gap-2 border-b border-white/10 pb-2">
+                    <button
+                      onClick={() => setGameTab('custom')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        gameTab === 'custom' 
+                          ? 'bg-white/10 text-white' 
+                          : 'text-white/50 hover:text-white'
+                      }`}
+                    >
+                      🎮 Juego
+                    </button>
+                    <button
+                      onClick={() => setGameTab('simulators')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        gameTab === 'simulators' 
+                          ? 'bg-white/10 text-white' 
+                          : 'text-white/50 hover:text-white'
+                      }`}
+                    >
+                      🔬 Simuladores PhET
+                    </button>
+                  </div>
+                )}
+                
+                {/* Contenido de la tab */}
+                {showCustomGame && (gameTab === 'custom' || simulators.length === 0) && customGame && (
+                  <customGame.component 
+                    planetColor={planet.color}
+                    onComplete={(score: number) => console.log('Game completed with score:', score)}
+                  />
+                )}
+                
+                {simulators.length > 0 && (gameTab === 'simulators' || !showCustomGame) && (
+                  <PhETSimulator 
+                    simulators={simulators}
+                    planetColor={planet.color}
+                    planetName={planet.name}
+                  />
+                )}
+              </div>
             )}
 
             {/* Ask AI Section */}
