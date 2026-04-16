@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_BASE_URL = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,10 +17,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!GROQ_API_KEY) {
-      console.error('[AI Assistant] GROQ_API_KEY not configured');
+    if (!GEMINI_API_KEY) {
+      console.error('[AI Assistant] GEMINI_API_KEY not configured');
       return NextResponse.json(
-        { error: 'API de Groq no configurada', success: false },
+        { error: 'API de Gemini no configurada', success: false },
         { status: 500 }
       );
     }
@@ -42,47 +41,64 @@ Instrucciones:
 - Usa emojis ocasionalmente para hacer la conversación más amena
 - Limita tus respuestas a un máximo de 3-4 párrafos`;
 
-    console.log('[AI Assistant] Calling Groq API...');
-    console.log('[AI Assistant] Model:', GROQ_MODEL);
-    console.log('[AI Assistant] Base URL:', GROQ_BASE_URL);
+    console.log('[AI Assistant] Calling Gemini API...');
+    console.log('[AI Assistant] Model:', GEMINI_MODEL);
 
-    // Llamar a la API de Groq
-    const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+    // Llamar a la API de Gemini
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
+        contents: [{
+          parts: [{
+            text: `${systemPrompt}\n\nPregunta del estudiante: ${message}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500,
+        }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[AI Assistant] Groq API error:', response.status, errorText);
+      console.error('[AI Assistant] Gemini API error:', response.status, errorText);
+      
+      // Si es error de ubicación, dar mensaje más amigable
+      if (errorText.includes('location is not supported')) {
+        return NextResponse.json(
+          { 
+            error: 'La API de Gemini no está disponible en tu región. Intenta usar VPN o cambiar a otra región.', 
+            success: false 
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Si es error de cuota
+      if (response.status === 429) {
+        return NextResponse.json(
+          { 
+            error: 'Se alcanzó el límite de solicitudes. Espera un momento e intenta de nuevo.', 
+            success: false 
+          },
+          { status: 429 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: `Error de Groq API: ${response.status}`, details: errorText, success: false },
+        { error: `Error de Gemini API: ${response.status}`, details: errorText, success: false },
         { status: 500 }
       );
     }
 
     const data = await response.json();
-    console.log('[AI Assistant] Groq response received');
+    console.log('[AI Assistant] Gemini response received');
 
-    const responseContent = data.choices?.[0]?.message?.content;
+    const responseContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!responseContent) {
       console.error('[AI Assistant] No content in response:', data);
